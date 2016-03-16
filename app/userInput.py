@@ -14,6 +14,9 @@ keyGraph = dict(a='qwez', b='vghn', c='xdfv ', d='sferxc', e='wsdfr', f='dgrcv',
                 q='was', r='etfdg', s='adwzx', t='rygfh', u='yijhk', v='fgcb ',
                 w='qes', x='zcsd', y='tugh', z='xas')
 
+# Checks if text is a single word
+def isWord(text):
+    return len(text.split()) == 1 and text.split()[0].isalpha()
 
 # Generates (improved) soundex code for a given word
 def soundex(word):
