@@ -39,7 +39,7 @@ window = gui.window()
 if os.path.isfile("data/user.pickle"):
     user = pickle.load(open("data/user.pickle", "rb"))
 else:
-    window.createNewUserForm(submitNewUserForm)
+    window.newUserForm = gui.newUserForm(window, submitNewUserForm)
 window.createMainMenu(None)
 #window.bodyText.set("Hello %s!" %(user["First Name"]))
 window.mainloop()
