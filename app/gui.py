@@ -18,6 +18,39 @@ def centreWindow(root, w=800, h=650):
 def doNotClose():
     pass
 
+class splash(Tk):
+    def __init__(self):
+        Tk.__init__(self)
+
+        self.protocol("WM_DELETE_WINDOW", doNotClose)
+        w = self.winfo_screenwidth()
+        self.wm_attributes("-topmost", True)
+
+        self.progressBar = ttk.Progressbar(self, orient=HORIZONTAL, mode="determinate")
+        self.progressBar.pack(expand=True, side=BOTTOM, fill=BOTH)
+
+        load = Image.open("assets/images/splash.png")
+        ratio = (w // 2) / load.width
+        load = load.resize((w // 2, int(load.height * ratio)), Image.ANTIALIAS)
+        centreWindow(self, w // 2, load.height)
+        self.photo = ImageTk.PhotoImage(load)
+        image = ttk.Label(self, image=self.photo)
+        image.pack(expand=True, fill=BOTH, side=TOP)
+
+        self.wm_overrideredirect(True)
+
+    def fill(self, increment=1):
+        self.progressBar["value"] += increment
+        if self.progressBar["value"] <= 100:
+            # read more bytes after 100 ms
+            self.after(15, self.fill)
+        else:
+            self.close()
+
+    def close(self):
+        self.destroy()
+        print(self)
+
 class newUserForm(Toplevel):
 
     def __init__(self, master, submitNewUserForm):
@@ -60,39 +93,41 @@ class newUserForm(Toplevel):
         self.master.focus()
         self.destroy()
 
+class menu(ttk.Frame):
+    def __init__(self, master, switchScreenTo):
+        ttk.Frame.__init__(self, master, padding=10)
 
-class splash(Tk):
-    def __init__(self):
-        Tk.__init__(self)
+        master.wm_title("Newton's laboratory - Main Menu")
 
-        self.protocol("WM_DELETE_WINDOW", doNotClose)
-        w = self.winfo_screenwidth()
-        self.wm_attributes("-topmost", True)
+        itemsText = StringVar(value=(" - Generate Quiz", " - Free Simulation", " - Review Notes", " - Preferences"))
 
-        self.progressBar = ttk.Progressbar(self, orient=HORIZONTAL, mode="determinate")
-        self.progressBar.pack(expand=True, side=BOTTOM, fill=BOTH)
+        self.grid(column=0, row=0, columnspan=5, rowspan=3, sticky=(N, E, S, W))
 
-        load = Image.open("assets/images/splash.png")
-        ratio = (w // 2) / load.width
-        load = load.resize((w // 2, int(load.height * ratio)), Image.ANTIALIAS)
-        centreWindow(self, w // 2, load.height)
-        self.photo = ImageTk.PhotoImage(load)
-        image = ttk.Label(self, image=self.photo)
-        image.pack(expand=True, fill=BOTH, side=TOP)
+        self.items = ttk.LabelFrame(self, text="Menu Items:", padding=10)
+        self.items.grid(column=0, row=0, columnspan=2, rowspan=2, sticky=(N, E, S, W))
 
-        self.wm_overrideredirect(True)
+        self.items.choices = Listbox(self.items, listvariable=itemsText, activestyle=NONE)
+        self.items.choices.pack(fill=BOTH, expand=1)
 
-    def fill(self, increment=1):
-        self.progressBar["value"] += increment
-        if self.progressBar["value"] <= 100:
-            # read more bytes after 100 ms
-            self.after(15, self.fill)
-        else:
-            self.close()
+        self.desc = ttk.LabelFrame(self, padding=10, text="Description:")
+        self.desc.grid(column=0, row=2, columnspan=2, rowspan=1, sticky=(N, E, S, W))
 
-    def close(self):
-        self.destroy()
-        print(self)
+        self.desc.texts = ["trhbdvwegdwveorgreerrebefsebhthtsthrbb  tbbff brbfbfbbbreberrbbrbbberb"]
+        ttk.Label(self.desc, text=self.desc.texts[0], justify=LEFT).pack(fill=BOTH)
+
+        self.properties = ttk.LabelFrame(self, text="Properties:", padding = 10)
+        self.properties.grid(column=2, row=0, columnspan=3, rowspan=3, sticky=(N, E, S, W))
+        self.properties.thing = Listbox(self.properties, listvariable=itemsText, height=23)
+        self.properties.thing.pack(fill=BOTH)
+
+        self.columnconfigure(ALL, weight=3, minsize=100)
+        self.rowconfigure(ALL, weight=1, minsize=100)
+        master.columnconfigure(ALL, weight=3, minsize=100)
+        master.rowconfigure(ALL, weight=1, minsize=100)
+
+
+
+
 
 class window(Tk):
     def __init__(self):
@@ -101,42 +136,9 @@ class window(Tk):
 
         centreWindow(self)
         self.wm_title("Newton's laboratory")
+        self.wm_state("zoomed")
         self.bodyText = StringVar()
         #ttk.Label(self, textvariable = self.bodyText, padding = 10).grid(row=0, column =0)
-
-        self.focus()
-
-    def createMainMenu(self, switchScreenTo):
-        self.wm_title("Newton's laboratory - Main Menu")
-
-        menuItemsText = StringVar(value=(" - Generate Quiz", " - Free Simulation", " - Review Notes", " - Preferences"))
-
-        self.mainMenu = ttk.Frame(self, padding=10)
-        self.mainMenu.grid(column=0, row=0, columnspan=5, rowspan=3, sticky=(N, E, S, W))
-
-
-        self.mainMenu.items = ttk.LabelFrame(self.mainMenu, text="Menu Items:", padding=10)
-        self.mainMenu.items.grid(column=0, row=0, columnspan=2, rowspan=2, sticky=(N, E, S, W))
-
-        self.mainMenu.items.choices = Listbox(self.mainMenu.items, listvariable=menuItemsText, activestyle=NONE)
-        self.mainMenu.items.choices.pack(fill=BOTH, expand=1)
-
-        self.mainMenu.desc = ttk.LabelFrame(self.mainMenu, padding=10, text="Description:")
-        self.mainMenu.desc.grid(column=0, row=2, columnspan=2, rowspan=1, sticky=(N, E, S, W))
-
-        self.mainMenu.desc.texts = ["trhbdvwegdwveorgreerrebefsebhthtsthrbb  tbbff brbfbfbbbreberrbbrbbberb"]
-        ttk.Label(self.mainMenu.desc, text=self.mainMenu.desc.texts[0], justify=LEFT)\
-            .pack(fill=BOTH)
-
-        self.mainMenu.properties = ttk.LabelFrame(self.mainMenu, text="Properties:", padding = 10)
-        self.mainMenu.properties.grid(column=2, row=0, columnspan=3, rowspan=3, sticky=(N, E, S, W))
-        self.mainMenu.properties.thing = Listbox(self.mainMenu.properties, listvariable=menuItemsText, height=23)
-        self.mainMenu.properties.thing.pack(fill=BOTH)
-
-        self.mainMenu.columnconfigure(ALL, weight=3, minsize=100)
-        self.mainMenu.rowconfigure(ALL, weight=1, minsize=100)
-        self.columnconfigure(ALL, weight=3, minsize=100)
-        self.rowconfigure(ALL, weight=1, minsize=100)
 
         self.focus()
 
