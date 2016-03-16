@@ -51,48 +51,6 @@ class splash(Tk):
         self.destroy()
         print(self)
 
-class newUserForm(Toplevel):
-
-    def __init__(self, master, submitNewUserForm):
-        Toplevel.__init__(self, master)
-
-        self.wm_title("New User Registration:")
-        self.tkraise(self)
-        self.resizable(width=False, height=False)
-        self.wm_attributes("-topmost", True)
-        centreWindow(self, 300, 150)
-
-        frame = ttk.Frame(self, padding=10)
-        frame.grid(row=0, column=0, sticky=(N, E, S, W))
-
-        intro = ttk.Label(frame, text="Welcome to Newton's Laboratory! \nPlease enter in some details..", justify=LEFT)
-        intro.grid(row=0, column=0, columnspan=3, sticky=(N, E, S, W))
-        firstNameLabel = ttk.Label(frame, text="First Name:")
-        firstNameLabel.grid(row=1, column=1, sticky=(S, E), padx=5, pady=5)
-        lastNameLabel = ttk.Label(frame, text="Last Name:")
-        lastNameLabel.grid(row=2, column=1, sticky=(S, E), padx=5, pady=5)
-
-        self.firstNameEntry = ttk.Entry(frame)
-        self.firstNameEntry.grid(row=1, column=2, columnspan=2, pady=5)
-        self.lastNameEntry = ttk.Entry(frame)
-        self.lastNameEntry.grid(row=2, column=2, columnspan=2, pady=5, sticky=W)
-
-        okButton = ttk.Button(frame, text="Submit", command=submitNewUserForm)
-        okButton.grid(row=1, column=5, rowspan=2, columnspan=2, sticky=W, padx=10)
-
-        self.errorLabel = ttk.Label(frame, text="", foreground='red', justify=LEFT)
-        self.errorLabel.grid(row=3, column=0, columnspan=5, pady=5, sticky=W)
-
-        self.bind("<Return>", submitNewUserForm)
-
-        self.protocol("WM_DELETE_WINDOW", doNotClose)
-
-        self.focus()
-
-    def close(self):
-        self.master.focus()
-        self.destroy()
-
 class window(Tk):
     def __init__(self):
         Tk.__init__(self)

@@ -26,20 +26,20 @@ def submitNewUserForm(event=None):
         pickleFile = open('data/user.pickle', 'wb')
         pickle.dump(user, pickleFile, pickle.HIGHEST_PROTOCOL)
         pickleFile.close()
-        window.newUserForm.close()
+        window.newUserForm.destroy()
         window.bodyText.set("Hello, "+user["First Name"]+"!")
+
+
 
 splash = gui.splash()
 splash.fill()
 splash.mainloop()
 
 window = gui.window()
-
 if os.path.isfile("data/user.pickle"):
     user = pickle.load(open("data/user.pickle", "rb"))
 else:
-    window.newUserForm = gui.newUserForm(window, submitNewUserForm)
-
+    window.createNewUserForm(submitNewUserForm)
 window.createMainMenu(None)
 #window.bodyText.set("Hello %s!" %(user["First Name"]))
 window.mainloop()
