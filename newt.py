@@ -30,10 +30,11 @@ def submitNewUserForm(event=None):
         window.bodyText.set("Hello, "+user["First Name"]+"!")
 
 
-
+"""
 splash = gui.splash()
 splash.fill()
 splash.mainloop()
+"""
 
 window = gui.window()
 if os.path.isfile("data/user.pickle"):
@@ -42,6 +43,6 @@ else:
     window.newUserForm = gui.newUserForm(window, submitNewUserForm)
 
 window.menu = gui.menu(window, None)
-#window.createMainMenu(None)
 #window.bodyText.set("Hello %s!" %(user["First Name"]))
+
 window.mainloop()

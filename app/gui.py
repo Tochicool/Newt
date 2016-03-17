@@ -1,43 +1,46 @@
-import threading
-import time
-
 from tkinter import *
 from tkinter import ttk
 from PIL import Image, ImageTk
 
-def centreWindow(root, w=800, h=650):
-    sw = root.winfo_screenwidth()  # Width of the screen
-    sh = root.winfo_screenheight()  # Height of the screen
+headFont = ("Helvetica", 35, "bold")
+buttonFont = ("Helvetica", 20, "bold")
+bodyFont = ("Helvetica", 13)
+
+def centre(window):
+    window.update_idletasks()
+    screenWidth = window.winfo_screenwidth()  # Width of the screen
+    screenHeight= window.winfo_screenheight()  # Height of the screen
 
     # Calculate x and y coordinates for the Tk root window
-    x = (sw / 2) - (w / 2)
-    y = (sh / 2) - (h / 2) - 20
+    x = (screenWidth//2) - (window.winfo_width()//2)
+    y = (screenHeight//2) - (window.winfo_height()//2)
 
-    root.geometry("%dx%d+%d+%d" % (w, h, x, y))  # Positions window
+    window.geometry("+%d+%d" % (x,y)) # Positions window
 
-def doNotClose():
-    pass
+def doNotClose(): pass
 
 class splash(Tk):
     def __init__(self):
         Tk.__init__(self)
 
         self.protocol("WM_DELETE_WINDOW", doNotClose)
-        w = self.winfo_screenwidth()
         self.wm_attributes("-topmost", True)
+        self.wm_overrideredirect(True)
 
         self.progressBar = ttk.Progressbar(self, orient=HORIZONTAL, mode="determinate")
         self.progressBar.pack(expand=True, side=BOTTOM, fill=BOTH)
 
+        w = self.winfo_screenwidth()
         load = Image.open("assets/images/splash.png")
         ratio = (w // 2) / load.width
         load = load.resize((w // 2, int(load.height * ratio)), Image.ANTIALIAS)
-        centreWindow(self, w // 2, load.height)
+        #self["width"] = w//2
+        #self["height"] = load.height
         self.photo = ImageTk.PhotoImage(load)
         image = ttk.Label(self, image=self.photo)
         image.pack(expand=True, fill=BOTH, side=TOP)
 
-        self.wm_overrideredirect(True)
+        centre(self)
 
     def fill(self, increment=1):
         self.progressBar["value"] += increment
@@ -49,7 +52,6 @@ class splash(Tk):
 
     def close(self):
         self.destroy()
-        print(self)
 
 class newUserForm(Toplevel):
 
@@ -57,20 +59,19 @@ class newUserForm(Toplevel):
         Toplevel.__init__(self, master)
 
         self.wm_title("New User Registration:")
-        self.tkraise(self)
+        self.tkraise(aboveThis=master)
         self.resizable(width=False, height=False)
         self.wm_attributes("-topmost", True)
-        centreWindow(self, 300, 150)
 
         frame = ttk.Frame(self, padding=10)
-        frame.grid(row=0, column=0, sticky=(N, E, S, W))
+        frame.grid(row=0, column=0, sticky="nesw")
 
         intro = ttk.Label(frame, text="Welcome to Newton's Laboratory! \nPlease enter in some details..", justify=LEFT)
-        intro.grid(row=0, column=0, columnspan=3, sticky=(N, E, S, W))
+        intro.grid(row=0, column=0, columnspan=3, sticky="nesw")
         firstNameLabel = ttk.Label(frame, text="First Name:")
-        firstNameLabel.grid(row=1, column=1, sticky=(S, E), padx=5, pady=5)
+        firstNameLabel.grid(row=1, column=1, sticky="nesw", padx=5, pady=5)
         lastNameLabel = ttk.Label(frame, text="Last Name:")
-        lastNameLabel.grid(row=2, column=1, sticky=(S, E), padx=5, pady=5)
+        lastNameLabel.grid(row=2, column=1, sticky="nesw", padx=5, pady=5)
 
         self.firstNameEntry = ttk.Entry(frame)
         self.firstNameEntry.grid(row=1, column=2, columnspan=2, pady=5)
@@ -84,10 +85,11 @@ class newUserForm(Toplevel):
         self.errorLabel.grid(row=3, column=0, columnspan=5, pady=5, sticky=W)
 
         self.bind("<Return>", submitNewUserForm)
-
         self.protocol("WM_DELETE_WINDOW", doNotClose)
 
         self.focus()
+        centre(self)
+
 
     def close(self):
         self.master.focus()
@@ -101,31 +103,30 @@ class menu(ttk.Frame):
 
         itemsText = StringVar(value=(" - Generate Quiz", " - Free Simulation", " - Review Notes", " - Preferences"))
 
-        self.grid(column=0, row=0, columnspan=5, rowspan=3, sticky=(N, E, S, W))
+        self.grid(sticky="nesw")
 
         self.items = ttk.LabelFrame(self, text="Menu Items:", padding=10)
-        self.items.grid(column=0, row=0, columnspan=2, rowspan=2, sticky=(N, E, S, W))
+        self.items.grid(column=0, row=0, columnspan=1, rowspan=2, sticky="nesw", padx=5, pady=5)
 
-        self.items.choices = Listbox(self.items, listvariable=itemsText, activestyle=NONE)
+        self.items.choices = Listbox(self.items, listvariable=itemsText, activestyle=NONE, font=headFont, width=1)
         self.items.choices.pack(fill=BOTH, expand=1)
 
         self.desc = ttk.LabelFrame(self, padding=10, text="Description:")
-        self.desc.grid(column=0, row=2, columnspan=2, rowspan=1, sticky=(N, E, S, W))
+        self.desc.grid(column=0, row=1, rowspan=2, sticky="nesw", padx=5, pady=5)
 
-        self.desc.texts = ["trhbdvwegdwveorgreerrebefsebhthtsthrbb  tbbff brbfbfbbbreberrbbrbbberb"]
-        ttk.Label(self.desc, text=self.desc.texts[0], justify=LEFT).pack(fill=BOTH)
-
+        self.desc.texts = ""
+        for i in range(10):
+            self.desc.texts += "a "
+        self.desc.l = ttk.Label(self.desc, text=self.desc.texts, justify=LEFT, wraplength=200).pack(fill=BOTH,expand=1)
         self.properties = ttk.LabelFrame(self, text="Properties:", padding = 10)
-        self.properties.grid(column=2, row=0, columnspan=3, rowspan=3, sticky=(N, E, S, W))
-        self.properties.thing = Listbox(self.properties, listvariable=itemsText, height=23)
-        self.properties.thing.pack(fill=BOTH)
+        self.properties.grid(column=2, row=0, columnspan=2, rowspan=3, sticky="nesw", padx=5, pady=5)
+        self.properties.thing = Listbox(self.properties, listvariable=itemsText)
+        self.properties.thing.pack(fill=BOTH, expand=1)
 
-        self.columnconfigure(ALL, weight=3, minsize=100)
-        self.rowconfigure(ALL, weight=1, minsize=100)
-        master.columnconfigure(ALL, weight=3, minsize=100)
-        master.rowconfigure(ALL, weight=1, minsize=100)
-
-
+        self.columnconfigure(ALL, weight=3)
+        self.rowconfigure(ALL, weight=1)
+        master.columnconfigure(ALL, weight=3)
+        master.rowconfigure(ALL, weight=1)
 
 
 
@@ -133,14 +134,17 @@ class window(Tk):
     def __init__(self):
         Tk.__init__(self)
         #s = ttk.Style().theme_use('clam')
+        s = ttk.Style()
+        s.configure(".", font=bodyFont)
+        s.configure("TButton", font=buttonFont)
 
-        centreWindow(self)
         self.wm_title("Newton's laboratory")
         self.wm_state("zoomed")
+        self.wm_minsize(800, 500)
         self.bodyText = StringVar()
         #ttk.Label(self, textvariable = self.bodyText, padding = 10).grid(row=0, column =0)
 
         self.focus()
-
+        centre(self)
 
 
