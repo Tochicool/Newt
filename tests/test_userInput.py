@@ -61,6 +61,21 @@ class test_userInput(unittest.TestCase):
                 assert not app.userInput.isTypo(false, correct), \
                     'Incorrectly identifies ' + false + ' as ' + group[0]
 
+    def test_getSF(self):
+        assert app.userInput.getSF(0) == 1, 'Fails for zero'
+        assert app.userInput.getSF(0.12) == 2,'Fails for decimals'
+        assert app.userInput.getSF(-000.2) == 1,'Fails for negatives'
+        assert app.userInput.getSF(1001) == 4,'Fails for floats with zeros'
+        assert app.userInput.getSF(0.0001) == 1,'Fails for leading zeros'
+        assert app.userInput.getSF(100) == 3,'Fails for leading zeros'
+
+    def test_roundSF(self):
+        assert app.userInput.roundSF(0, 1) == 0, 'Fails for zero'
+        assert app.userInput.roundSF(1, 1) == 1, 'Fails for one'
+        assert app.userInput.roundSF(9.81, 2) == 9.8, 'Fails for decimal'
+        assert app.userInput.roundSF(54054, 3) == 54100, 'Fails for non-decimal'
+        assert app.userInput.roundSF(42, 5) == 42, 'Fails when sf is overkill'
+        assert app.userInput.roundSF(-1011, 2) == -1000, 'Fails for negatives'
 
 if __name__ == '__main__':
     unittest.main()

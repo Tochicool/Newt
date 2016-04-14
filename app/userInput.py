@@ -1,4 +1,6 @@
 import re  # Python's built-in regular expression module
+import math
+from decimal import Decimal
 
 soundMap = ['AEIOUWYH',
             'BFPV',
@@ -14,9 +16,65 @@ keyGraph = dict(a='qwez', b='vghn', c='xdfv ', d='sferxc', e='wsdfr', f='dgrcv',
                 q='was', r='etfdg', s='adwzx', t='rygfh', u='yijhk', v='fgcb ',
                 w='qes', x='zcsd', y='tugh', z='xas')
 
+synonyms = [
+    ["net ", "total ", "resultant ", "sum "],
+    ["equals ", "cancel out ", "cancels out ", "equal to "],
+    ["per", "/", "\\", "divided by"],
+    [" x ", "times", "multiplied by"],
+    ["energy", "work done", "work", "wd"],
+    ["rate of change", "gradient", "slope"],
+    ["kinetic energy", "ke", "ekin"],
+    ["increases", "gets bigger"],
+    ["decreases", "reduces", "gets smaller"],
+    ["particle", "molecule"],
+    [" squared", "^2"],
+    [" is 0", " is zero"]
+]
+
+# Returns how many significant figures a float is given to
+def getSF(number):
+    if number == 0:
+        return 1  # Special case
+
+    digits = str(number).replace("." or "-", "")
+    sf = 0
+    for digit in digits:
+        if digit in "123456789" or sf > 0:
+            sf += 1
+    return sf
+
+# Rounds a given float to a given number of significant figures
+def roundSF(number, sf=3):
+    if number == 0:
+        return 0 # Special case; log(0) is undefined
+    shift = math.floor(math.log10(abs(number)))+2-sf  # Number of places to shift decimal place
+    normalised = number/(10**shift)  # Gets X0XX0X.Y format where Y is the last significant digit
+    rounded = round(normalised, 1)*(10**shift)  # Rounds shifted number using built-in function then undos shift
+    return rounded
+
 # Checks if text is a single word
 def isWord(text):
     return len(text.split()) == 1 and text.split()[0].isalpha()
+
+# Returns lower case and replaces synonyms
+def normalise(text):
+    text = text.lower()
+    text = re.sub(r'[^a-z\+\-\\/]+', ' ', text)
+
+    while "  " in text:
+        text.replace("  ", " ")
+
+    if text[0] == " ":
+        text = text[1:]
+
+    if text[-1] == " ":
+        text = text[:-1]
+
+    for group in synonyms:
+        for synonym in group[1:]:
+            text = text.replace(synonym, group[0])
+
+    return text
 
 # Generates (improved) soundex code for a given word
 def soundex(word):
@@ -61,7 +119,7 @@ def soundex(word):
 
 # Identifies if a word has been miss-entered
 def isTypo(word, goal, depth=2):
-    # print('   '*(len(word)*depth-depth), word, ' ', goal)
+
     if word == goal:
         return True
     elif depth < 1:
@@ -70,15 +128,18 @@ def isTypo(word, goal, depth=2):
     aa = str()
     bb = str()
     word = re.sub(r'[^a-z]+', '', word)
-    word = ''.join(sorted(set(word)))
-    goal = ''.join(sorted(set(goal)))
+    word = ''.join(sorted(set(word.lower())))
+    goal = ''.join(sorted(set(goal.lower())))
     for a, b in zip(word, goal):
         if a != b:
             aa += a
             bb += b
 
-    if len(aa) < 2:
-        return True
+    if abs(len(word) - len(goal)) > (len(word) + len(goal)) // 4:
+        return False
+
+    #f len(aa) < 2:
+        #return True
 
     for a in aa:
         for i in range(len(keyGraph[a])):
