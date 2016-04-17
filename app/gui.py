@@ -1,9 +1,10 @@
 import app.questions as questions
 
 from tkinter import *
-from tkinter import ttk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
+
+import subprocess
 
 headFont = ("Helvetica", 20, "bold")
 buttonFont = ("Helvetica", 20, "bold")
@@ -172,7 +173,10 @@ class menu(ttk.Frame):
 
         quiz.start = ttk.Button(quiz, text="START!", command=startQuiz).grid(column=0, row=5, rowspan=2, padx=10, pady=10, sticky="nesw")
 
-        self.bind("<Return>", generateQuiz)
+        self.properties.sim = sim = ttk.Frame(self.properties)
+        sim.G = IntVar(value=1)
+
+
 
     def setDescription(self, text):
         self.desc.text["state"] = NORMAL
@@ -186,7 +190,9 @@ class menu(ttk.Frame):
             self.properties.quiz.tkraise()
             self.setDescription("Generate a random set of questions based on your configuration")
         elif choice == 1:
+            self.properties.sim.tkraise()
             self.setDescription("Start a 2D-physics simulation environment for experiments and demonstrations")
+            subprocess.Popen("python app/sim.py 3")
         elif choice == 2:
             self.setDescription("View notes and explanations on select topics")
         elif choice == 3:

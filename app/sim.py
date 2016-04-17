@@ -39,7 +39,7 @@ fps = float("inf")  # uncapped
 
 # PREPERENCES
 pixelsPerMetre = 50
-keepBodiesInScreen = True
+keepBodiesInScreen = not True
 
 bodies = []
 class Body:
@@ -318,6 +318,7 @@ class Rod(Constraint):
         Constraint.__init__(self, pointA, pointB)
         self.pivot = pointA.displacement + 0.5*(pointB.displacement - pointA.displacement)
         constraints.append(self)
+
     def resolve(self):
         Constraint.resolve(self)
         A = self.pointA.displacement
@@ -449,7 +450,9 @@ def __main__():
 
     #p = Body(100 + 20, screen.height - 100 - 20, 1, 20)
     #q = Body(screen.width-100-20, screen.height - 100-20, 1, 20)
-    rod = Rod(Point(100, screen.height - 100), Point(screen.width-100, screen.height - 100))
+    #rod = Rod(Point(100, screen.height - 100), Point(screen.width-100, screen.height - 100))
+
+    Body(300, 30, 15, 20)
     p1 = None
     p2 = None
     running = True
@@ -499,7 +502,7 @@ def __main__():
                     running = not running
 
         if not paused:
-            steps = 2 ** 6  # Proportional to precision of simulation
+            steps = 2 ** 5  # Proportional to precision of simulation
             dt = 1 / steps
             screen.surface.fill((224, 247, 255))
             for step in range(steps):
@@ -533,7 +536,7 @@ def __main__():
                     totalEnergy += body.energy()
 
                 #print(totalEnergy, " J")
-                #pygame.time.Clock().tick(fps)
+                #pygame.time.Clock().tick(steps)
                 pygame.display.update()
 
 __main__()
