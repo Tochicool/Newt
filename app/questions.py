@@ -5,10 +5,14 @@ import app.userInput as input
 questions = []
 
 class Question():
+
+    hint = "No hint available"
     marks = int()
+    maxMarks = int()
     topics = []
     diagram = None
     response = None
+    gui = None
 
     def __init__(self, prompt, answer, topic=None):
         self.prompt = prompt
@@ -26,16 +30,29 @@ class Question():
 
 
 class MultipleChoice(Question):
-    marks = 2
+    marks = maxMarks = 2
 
-    def __init__(self, prompt, answer, *redHerrings):
+    def __init__(self, prompt, answer, redHerrings):
         Question.__init__(self, prompt, answer)
-
         self.redHerrings = redHerrings
+        self.options = redHerrings+[answer]
+        random.shuffle(self.options)
+
+    def mark(self, response):
+        if self.answer == response:
+            self.response = response
+            return True
+        elif self.marks > 1:
+            self.marks -= 1
+            return -1
+        else:
+            self.marks -= 1
+            self.response = response
+            return False
 
 
 class Qualitative(Question):
-    marks = 2
+    marks = maxMarks = 2
     
     def __init__(self, prompt, answer):
         Question.__init__(self, prompt, answer)
@@ -84,7 +101,7 @@ class Qualitative(Question):
             total += 1
 
         self.marks = min(self.marks, int(match*self.marks/total + tolerance))
-        return max(0, self.marks)
+        return max(0, self.maxMarks)
 
 
 class Quantitative(Question):
@@ -106,10 +123,28 @@ class Quantitative(Question):
 
 
 class Quiz():
-    def __init__(self, questionSet, timed=True, hints=True):
+    index = 0
+    def __init__(self, questionSet, timed=True, showHints=True):
         self.questionSet = questionSet
-        self.timed = timed
-        self.hints = hints
+        if timed:
+            self.time = int(60*sum([question.marks for question in questionSet]))
+        else:
+            self.time = '\u221E' # Lemniscate
+        self.showHints = showHints
+
+    def score(self):
+        return sum([question.marks for question in self.questionSet if question.response is not None])
+
+    def maxScore(self):
+        return sum([question.maxMarks for question in self.questionSet])
+
+    def numberAnswered(self):
+        number = 0
+        for question in self.questionSet:
+            if question.response is not None:
+                number += 1
+        return number
+
 
 definitionsTXT = open('data/definitions.txt', 'r', encoding='utf-8')
 topic = 0
@@ -158,7 +193,7 @@ for line in multipleChoiceTXT:
             redHerrings = []
 multipleChoiceTXT.close()
 
-qualitativeTXT = open('data/qualitative.txt', 'r', encoding='utf-8')
+qualitativeTXT = open('data/qualitative.txt', 'r', encoding='utf-16')
 topic=0
 state=1
 prompt=""
@@ -172,7 +207,7 @@ for line in qualitativeTXT:
         if "\n" == line and state == 2:
             question = Qualitative(prompt, answer)
             question.topics = [topic]
-            question.marks = marks
+            question.marks = question.maxMarks = marks
             state = 1
             prompt = ""
             answer = ""
@@ -181,9 +216,9 @@ for line in qualitativeTXT:
             marks = int(line[0])
             state = 2
         elif state == 1:
-            prompt += line[:-2]
+            prompt += line
         elif state == 2:
-            answer += line[:-2]
+            answer += line
 qualitativeTXT.close()
 
 #for question in questions:

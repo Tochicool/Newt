@@ -12,8 +12,8 @@ t = symbols( 't', positive = True)
 bodies = list( )
 forces = list( )
 w, h = 700, 500
-ppm = 50
-g = Rational( 10 * ppm )
+pixelsPerMetre = 50
+g = Rational(10 * pixelsPerMetre)
 fps = 60
 time = Rational( 0 )
 tick = Rational( 1 / fps )

@@ -33,7 +33,7 @@ def drawText(text, fontSize, x, y):
     screen.surface.blit(TextSurf, TextRect)
 
 # GLOBAL VARIABLES
-ppm = 50
+pixelsPerMetre = 50
 g = pygame.math.Vector2(0, 9.81)
 bodies = []
 points = []
@@ -341,11 +341,11 @@ def __main__():
                     if p1 != None:
                         c = Constraint(p1, p2)
                 elif event.button == 2:
-                    size = 2*ppm*random.random()+5
+                    size = 2 * pixelsPerMetre * random.random() + 5
                     #newBody = Body(mouse[0], mouse[1], size)
                     newBox = createBox(mouse[0], mouse[1], size, size)
                 else:
-                    size = 2*ppm*random.random()+5
+                    size = 2 * pixelsPerMetre * random.random() + 5
                     newBody = Body(mouse[0], mouse[1], size)                    
 
             if event.type == pygame.KEYDOWN:

@@ -8,6 +8,8 @@ import random
 user = {"First Name": "",
         "Last Name": ""}
 
+questionSet = list(questions.questions)
+
 '''
 splashScreen = gui.splash()
 splashScreen.fillBar()
@@ -31,8 +33,9 @@ def submitNewUserForm(event=None):
         window.newUserForm.destroy()
         window.bodyText.set("Hello, "+user["First Name"]+"!")
 
-
 def generateQuiz(event=None):
+    global questionSet
+
     questionSet = list(questions.questions)
 
     topicsSelected = [window.menu.properties.quiz.topic1.get(),
@@ -47,6 +50,8 @@ def generateQuiz(event=None):
                 questionSet.remove(question)
                 break
 
+    #questionSet = [x for x in questionSet if isinstance(x, questions.MultipleChoice)]
+
     random.shuffle(questionSet)
     window.menu.properties.quiz.noOfQuestions.set(min(len(questionSet), window.menu.properties.quiz.noOfQuestions.get()))
     questionSet = questionSet[:window.menu.properties.quiz.noOfQuestions.get()]
@@ -58,9 +63,13 @@ def generateQuiz(event=None):
         txt += str(i + 1)+") "+str(questionSet[i])+"\n"
     window.menu.properties.quiz.preview.set(txt)
 
+
 def startQuiz(event=None):
-    window.menu.grid_forget()
-    window.quiz = gui.quiz(window)
+    quiz = questions.Quiz(questionSet,
+                          window.menu.properties.quiz.isTimed.get(),
+                          window.menu.properties.quiz.giveHints.get()
+                          )
+    window.quiz = gui.quizFrame(window, quiz)
 
 splash = gui.splash()
 splash.fill()

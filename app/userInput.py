@@ -17,18 +17,19 @@ keyGraph = dict(a='qwez', b='vghn', c='xdfv ', d='sferxc', e='wsdfr', f='dgrcv',
                 w='qes', x='zcsd', y='tugh', z='xas')
 
 synonyms = [
-    ["net ", "total ", "resultant ", "sum "],
-    ["equals ", "cancel out ", "cancels out ", "equal to "],
-    ["per", "/", "\\", "divided by"],
-    [" x ", "times", "multiplied by"],
-    ["energy", "work done", "work", "wd"],
-    ["rate of change", "gradient", "slope"],
-    ["kinetic energy", "ke", "ekin"],
+    ["net", "total", "resultant", "sum"],
+    ["equals", "cancel out", "cancels out", "equal to"],
+    [" per ", " / ", " \\  ", " divided by "],
+    [" x ", " times ", " multiplied by "],
+    [" energy ", " work done ", " work ", " wd "],
+    [" rate of change ", " gradient ", " slope "],
+    [" kinetic energy ", "  ke ", " ekin "],
     ["increases", "gets bigger"],
     ["decreases", "reduces", "gets smaller"],
     ["particle", "molecule"],
-    [" squared", "^2"],
-    [" is 0", " is zero"]
+    ["squared", "^2"],
+    [" is 0", " is zero"],
+    ["mass", "weight"]
 ]
 
 # Returns how many significant figures a float is given to
@@ -64,10 +65,10 @@ def normalise(text):
     while "  " in text:
         text.replace("  ", " ")
 
-    if text[0] == " ":
+    if len(text) > 0 and text[0] == " ":
         text = text[1:]
 
-    if text[-1] == " ":
+    if len(text) > 0 and text[-1] == " ":
         text = text[:-1]
 
     for group in synonyms:

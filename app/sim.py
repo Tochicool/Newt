@@ -49,7 +49,7 @@ class Body:
     elasticity = 1
 
     def __init__(self, x, y, m=1, r=10):
-        self.displacement, = pygame.math.Vector2(x, y)
+        self.displacement = pygame.math.Vector2(x, y)
         self.previousDisplacement = pygame.math.Vector2(x, y)
         self.acceleration = pygame.math.Vector2(0, 0)
         self.radius = r
@@ -100,96 +100,6 @@ class Body:
         separation = self.displacement - other.displacement
         return G * self.mass * other.mass * separation.normalize() / separation.length_squared()
 
-    def borderCollide(self, dt):
-        '''
-        if not self.r < self.p.x < screen.width-self.r:
-            self.p.x = 2*self.pp.x-self.p.x-self.a.x
-        if not self.r < self.p.y < screen.height-self.r:
-            self.p.y = 2*self.pp.y-self.p.y-self.a.y
-
-
-        self.p.x = max(self.p.x, self.r)
-        self.p.x = min(self.p.x, screen.width-self.r)
-        self.p.y = max(self.p.y, self.r)
-        self.p.y = min(self.p.y, screen.height-self.r)
-        '''
-
-        normalForce = pygame.math.Vector2(0, 0)
-        if self.displacement.x < self.radius:
-            normalForce.x += (self.radius - self.displacement.x) / dt ** 2
-        if self.displacement.x + self.radius > screen.width:
-            normalForce.x -= (self.displacement.x + self.radius - screen.width) / dt ** 2
-        if self.displacement.y < self.radius:
-            normalForce.y += (self.radius - self.displacement.y) / dt ** 2
-        if self.displacement.y + self.radius > screen.height:
-            normalForce.y -= (self.displacement.y + self.radius - screen.height) / dt ** 2
-
-        self.accelerate(normalForce)
-
-    def constraintCollide(self, constraint, dt):
-        '''Q = self.displacement# Centre of circle
-        r = self.r+3+(self.p-self.pp).length() #Radius of circle
-        startPointVector = constraint.point1.displacement# Start of line segment
-        lineVector = constraint.point2.displacement- startPointVector # Vector along the line
-
-        a = lineVector.dot(lineVector)
-        b = 2 * lineVector.dot(startPointVector - Q)
-        c = startPointVector.dot(startPointVector) + Q.dot(Q) - 2 * startPointVector.dot(Q) - r**2
-        disc = b**2 - 4 * a * c
-        if disc < 0 or a == 0:
-            return False, None
-        else:
-            sqrt_disc = math.sqrt(disc)
-            t1 = (-b + sqrt_disc)/(2*a)
-            t2 = (-b - sqrt_disc)/(2*a)
-
-        if not (0 <= t1 <= 1 or 0 <= t2 <= 1):
-            return False, None
-
-        scalarParameter = max(0, min(1, -b/(2*a)))
-
-        if (startPointVector + scalarParameter*lineVector - Q).length() <= r:
-            i = startPointVector + scalarParameter*lineVector
-        else:
-            return False, None
-
-        d = self.displacement- i
-
-        pygame.gfxdraw.filled_circle(screen.surface, int(d.x), int(d.y), 5, (0,0,0))
-        
-        return True, i'''
-
-        startPointVector = constraint.point1.displacement
-        lineVector = constraint.point2.displacement- startPointVector
-        circleCentreVector = self.displacement
-
-        if lineVector.dot(lineVector) == 0:
-            return False
-
-        scalarParameter = lineVector.dot(circleCentreVector - startPointVector) / lineVector.dot(lineVector)
-
-        scalarParameter = min(max(0, scalarParameter), 1)
-
-        closestPoint = startPointVector + lineVector * scalarParameter
-        
-        displacementFromCircle = closestPoint - circleCentreVector
-
-        if not (0 < displacementFromCircle.length_squared() < self.radius ** 2):
-            return False
-
-        meanMass = (self.mass+constraint.point1.mass+constraint.point2.mass)/3
-
-        normalForce = meanMass*(displacementFromCircle.normalize() * self.radius - displacementFromCircle) / dt ** 2
-
-        # self.displacement-= ((closestPoint-circleCentreVector)/(closestPoint-circleCentreVector).length())*(self.r-(closestPoint-circleCentreVector).length())
-
-        self.applyForce(-normalForce)
-
-        constraint.point1.applyForce((1 - scalarParameter) * normalForce)
-        constraint.point2.applyForce(scalarParameter * normalForce)
-
-        return True
-
     def collide(self, other, dt):
 
         '''
@@ -230,20 +140,106 @@ class Body:
         if not (0 < separation.dot(separation) <= lengthLimit ** 2):
             return False
 
-        meanMass = (self.mass+other.mass)/2
-
-        contactForce = meanMass*(separation.normalize() * lengthLimit - separation) / dt ** 2
+        contactForce = (separation.normalize() * lengthLimit - separation) / dt ** 2
 
         self.applyForce(contactForce)
         other.applyForce(-contactForce)
 
         return True
 
+    def constraintCollide(self, constraint, dt):
+        '''Q = self.displacement# Centre of circle
+        r = self.r+3+(self.p-self.pp).length() #Radius of circle
+        startPointVector = constraint.point1.displacement# Start of line segment
+        lineVector = constraint.point2.displacement- startPointVector # Vector along the line
+
+        a = lineVector.dot(lineVector)
+        b = 2 * lineVector.dot(startPointVector - Q)
+        c = startPointVector.dot(startPointVector) + Q.dot(Q) - 2 * startPointVector.dot(Q) - r**2
+        disc = b**2 - 4 * a * c
+        if disc < 0 or a == 0:
+            return False, None
+        else:
+            sqrt_disc = math.sqrt(disc)
+            t1 = (-b + sqrt_disc)/(2*a)
+            t2 = (-b - sqrt_disc)/(2*a)
+
+        if not (0 <= t1 <= 1 or 0 <= t2 <= 1):
+            return False, None
+
+        scalarParameter = max(0, min(1, -b/(2*a)))
+
+        if (startPointVector + scalarParameter*lineVector - Q).length() <= r:
+            i = startPointVector + scalarParameter*lineVector
+        else:
+            return False, None
+
+        d = self.displacement- i
+
+        pygame.gfxdraw.filled_circle(screen.surface, int(d.x), int(d.y), 5, (0,0,0))
+
+        return True, i'''
+
+        startPointVector = constraint.pointA.displacement
+        lineVector = constraint.pointB.displacement - startPointVector
+        circleCentreVector = self.displacement
+
+        if lineVector.dot(lineVector) == 0:
+            return False
+
+        scalarParameter = lineVector.dot(circleCentreVector - startPointVector) / lineVector.dot(lineVector)
+
+        scalarParameter = min(max(0, scalarParameter), 1)
+
+        closestPoint = startPointVector + lineVector * scalarParameter
+
+        displacementFromCircle = closestPoint - circleCentreVector
+
+        if not (0 < displacementFromCircle.length_squared() < self.radius ** 2):
+            return False
+
+        meanMass = (self.mass + constraint.pointA.mass + constraint.pointB.mass) / 3
+
+        normalForce = meanMass * (displacementFromCircle.normalize() * self.radius - displacementFromCircle) / dt ** 2
+
+        # self.displacement-= ((closestPoint-circleCentreVector)/(closestPoint-circleCentreVector).length())*(self.r-(closestPoint-circleCentreVector).length())
+
+        self.applyForce(-normalForce)
+
+        constraint.pointA.applyForce((1 - scalarParameter) * normalForce)
+        constraint.pointB.applyForce(scalarParameter * normalForce)
+
+        return True
+
+    def borderCollide(self, dt):
+        '''
+        if not self.r < self.p.x < screen.width-self.r:
+            self.p.x = 2*self.pp.x-self.p.x-self.a.x
+        if not self.r < self.p.y < screen.height-self.r:
+            self.p.y = 2*self.pp.y-self.p.y-self.a.y
+
+
+        self.p.x = max(self.p.x, self.r)
+        self.p.x = min(self.p.x, screen.width-self.r)
+        self.p.y = max(self.p.y, self.r)
+        self.p.y = min(self.p.y, screen.height-self.r)
+        '''
+
+        normalForce = pygame.math.Vector2(0, 0)
+        if self.displacement.x < self.radius:
+            normalForce.x += (self.radius - self.displacement.x) / dt ** 2
+        if self.displacement.x + self.radius > screen.width:
+            normalForce.x -= (self.displacement.x + self.radius - screen.width) / dt ** 2
+        if self.displacement.y < self.radius:
+            normalForce.y += (self.radius - self.displacement.y) / dt ** 2
+        if self.displacement.y + self.radius > screen.height:
+            normalForce.y -= (self.displacement.y + self.radius - screen.height) / dt ** 2
+
+        self.accelerate(normalForce)
+
     def draw(self):
-        pygame.gfxdraw.filled_circle(screen.surface, int(self.displacement.x), int(self.displacement.y),
-                                     int(self.radius), self.colour)
-        pygame.gfxdraw.aacircle(screen.surface, int(self.displacement.x), int(self.displacement.y), int(self.radius),
-                                self.colour)
+        pygame.gfxdraw.filled_circle(screen.surface, int(self.displacement.x), int(self.displacement.y), int(self.radius), self.colour)
+        pygame.gfxdraw.aacircle(screen.surface, int(self.displacement.x), int(self.displacement.y), int(self.radius),self.colour)
 
 class Planet(Body):
     def __init__(self, m, r, h=10):
@@ -258,7 +254,7 @@ points = []
 class Point(Body):
     radius = 6
 
-    def __init__(self, x, y, m=1):
+    def __init__(self, x, y, m=0.5):
         Body.__init__(self, x, y, m, 5)
         self.displacement = pygame.math.Vector2(x, y)
         self.previousDisplacement = pygame.math.Vector2(x, y)
@@ -289,29 +285,61 @@ class Constraint:
     parent = None
     colour = (165, 165, 165)
 
-    def __init__(self, point1, point2):
-        self.point1 = point1
-        self.point2 = point2
-        self.target = point1.displacement.distance_to(self.point2.displacement)
+    def __init__(self, pointA, pointB):
+        self.pointA = pointA
+        self.pointB = pointB
+        self.target = pointA.displacement.distance_to(self.pointB.displacement)
         constraints.append(self)
 
     def elasticPotentialEnergy(self):
-        extension = (self.point1.displacement-self.point2.displacement).length() - self.target
+        extension = (self.pointA.displacement-self.pointB.displacement).length() - self.target
         return 0.5*self.forceConstant*extension**2
 
     def resolve(self):
-        d = self.point2.displacement - self.point1.displacement
+        d = self.pointB.displacement - self.pointA.displacement
         length = d.length()
         if length != 0:
             factor = (length - self.target) / (length / self.forceConstant)
         else:
             factor = self.target * 0.5
         correction = factor * d
-        self.point1.correct(correction)
-        self.point2.correct(-correction)
+        self.pointA.correct(correction)
+        self.pointB.correct(-correction)
 
     def draw(self):
-        pygame.draw.aaline(screen.surface, self.colour, self.point1.displacement, self.point2.displacement, 1)
+        pygame.draw.aaline(screen.surface, self.colour, self.pointA.displacement, self.pointB.displacement, 1)
+
+class Rod(Constraint):
+    forceConstant = 0.4
+    parent = None
+    colour = (165, 165, 165)
+
+    def __init__(self, pointA, pointB):
+        Constraint.__init__(self, pointA, pointB)
+        self.pivot = pointA.displacement + 0.5*(pointB.displacement - pointA.displacement)
+        constraints.append(self)
+    def resolve(self):
+        Constraint.resolve(self)
+        A = self.pointA.displacement
+        B = self.pointB.displacement
+        P = self.pivot
+
+        L = B-A
+        t = (P-A).dot(L)/L.dot(L)
+        t = max(0, min(t, 1))
+        D = A + L*t
+        X = P - D
+        X += L*(t-0.5)
+
+
+        pygame.gfxdraw.filled_circle(screen.surface, int(P.x), int(P.y), 2, fixedPoint.colour)
+
+        self.pointA.correct(X)
+        self.pointB.correct(X)
+
+    def draw(self):
+        Constraint.draw(self)
+        pygame.gfxdraw.filled_circle(screen.surface, int(self.pivot.x), int(self.pivot.y), 1, (0, 0, 0))
 
 
 class rigidBody:
@@ -354,7 +382,7 @@ def createCircle(x, y, r, s):
             circle.append(c2)
         pp = p
         angle += 2 * math.pi / s
-    c = Constraint(pp, circle[0].point2)
+    c = Constraint(pp, circle[0].pointB)
     circle.append(c)
 
     return rigidBody(circle)
@@ -412,13 +440,16 @@ def createNewtonsCradle(x, y, length, radius, angle, amount):
 def __main__():
     global bodies, points, constraints, G, screen, fps, pixelsPerMetre
 
-    earth = Planet(5.972 * 10 ** 24, 6.371 * 10 ** 6)
-    createTruss(30, 30, 40, 6)
-    rigidBody([Constraint(fixedPoint(10, screen.height - 30), fixedPoint(screen.width - 10, screen.height - 30))])
-    createNewtonsCradle(260, 200, 200, 20, 30, 4)
+    earth = Planet(5.972 * 10 ** 24, 6.371 * 10 ** 6, 40)
+    #createTruss(30, 30, 40, 6)
+    #rigidBody([Constraint(fixedPoint(10, screen.height - 30), fixedPoint(screen.width - 10, screen.height - 30))])
+    #createNewtonsCradle(260, 200, 200, 20, 30, 4)
     #createRope(fixedPoint(300, 10), Point(300, 310), 100)
     #createCircle(300, 40, 30, 10)
 
+    #p = Body(100 + 20, screen.height - 100 - 20, 1, 20)
+    #q = Body(screen.width-100-20, screen.height - 100-20, 1, 20)
+    rod = Rod(Point(100, screen.height - 100), Point(screen.width-100, screen.height - 100))
     p1 = None
     p2 = None
     running = True
@@ -435,7 +466,7 @@ def __main__():
                     if p1 != None:
                         connect = False
                         for point in points:
-                            if (mouse - point.p).length() <= point.r * 2:
+                            if (mouse - point.displacement).length() <= point.radius * 2:
                                 p2 = point
                                 connect = True
                         if not connect:
@@ -460,7 +491,7 @@ def __main__():
                     bodies = [earth]
                     del points[:]
                     del constraints[:]
-                    p1 = None;
+                    p1 = None
                     p2 = None
                 elif event.key == pygame.K_SPACE:
                     paused = not paused
@@ -468,7 +499,7 @@ def __main__():
                     running = not running
 
         if not paused:
-            steps = 2 ** 4  # Proportional to precision of simulation
+            steps = 2 ** 6  # Proportional to precision of simulation
             dt = 1 / steps
             screen.surface.fill((224, 247, 255))
             for step in range(steps):
@@ -501,8 +532,8 @@ def __main__():
                     body.draw()
                     totalEnergy += body.energy()
 
-                print(totalEnergy, " J")
-                # pygame.time.Clock().tick(fps)
+                #print(totalEnergy, " J")
+                #pygame.time.Clock().tick(fps)
                 pygame.display.update()
 
 __main__()
