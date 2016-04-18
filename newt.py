@@ -1,6 +1,7 @@
 import app.gui as gui
 import app.userInput as input
 import app.questions as questions
+import app.sim as sim
 import os
 import pickle
 import random
@@ -71,6 +72,19 @@ def startQuiz(event=None):
                           )
     window.quiz = gui.quizFrame(window, quiz)
 
+def startFreeSimulation(event=None):
+    #try:
+        freeSim = sim.Simulation(
+            G=float(window.menu.properties.sim.G.get()),
+            visual=window.menu.properties.sim.visual.get(),
+            airResistance=window.menu.properties.sim.airResistance.get(),
+            steps=int(window.menu.properties.sim.steps.get())
+        )
+        freeSim.start()
+    #except Exception:
+        #gui.messagebox.showerror("Input error", "Configuration for simulation is invalid")
+
+
 splash = gui.splash()
 splash.fill()
 splash.mainloop()
@@ -82,7 +96,7 @@ else:
     window.newUserForm = gui.newUserForm(window, submitNewUserForm)
 
 window.menu = gui.menu(window)
-window.menu.createProperties(generateQuiz, startQuiz)
+window.menu.createProperties(generateQuiz, startQuiz, startFreeSimulation)
 generateQuiz()
 #window.bodyText.set("Hello %s!" %(user["First Name"]))
 

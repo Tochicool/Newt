@@ -10,51 +10,40 @@ INTRUCTIONS:
 import pygame
 from pygame import gfxdraw
 import random
-import time
 import math
+import threading
 
-pygame.init()
 
-class canvas:
+class Canvas:
     def __init__(self, width, height, windowCaption):
         self.width = width
         self.height = height
         self.surface = pygame.display.set_mode((width, height))
         pygame.display.set_caption(windowCaption)
 
-def drawText(text, fontSize, x, y):
-    font = pygame.font.SysFont(None, fontSize)
-    TextSurf = font.render(text, True, (224 / 4, 247 / 4, 255 / 4))
-    TextRect = TextSurf.get_rect()
-    TextRect.x = x;
-    TextRect.y = y;
-    screen.surface.blit(TextSurf, TextRect)
+    def drawText(self, text, fontSize, x, y):
+        font = pygame.font.SysFont(None, fontSize)
+        TextSurf = font.render(text, True, (224 / 4, 247 / 4, 255 / 4))
+        TextRect = TextSurf.get_rect()
+        TextRect.x = x;
+        TextRect.y = y;
+        self.surface.blit(TextSurf, TextRect)
 
 
-# GLOBAL VARIABLES
-#g = pygame.math.Vector2(0, -9.81)
-G = 6.674 * 10 ** (-11)
-screen = canvas(700, 500, "Newton's Laboratory - Simulation")
-fps = float("inf")  # uncapped
-
-# PREPERENCES
-pixelsPerMetre = 50
-keepBodiesInScreen = not True
-
-bodies = []
 class Body:
     anchored = False
     parent = None
     colour = (255, 165, 0)
     elasticity = 1
 
-    def __init__(self, x, y, m=1, r=10):
+    def __init__(self, simulation, x, y, m=1, r=10):
+        self.simulation = simulation
+        self.simulation.bodies.append(self)
         self.displacement = pygame.math.Vector2(x, y)
         self.previousDisplacement = pygame.math.Vector2(x, y)
         self.acceleration = pygame.math.Vector2(0, 0)
         self.radius = r
         self.mass = m
-        bodies.append(self)
 
     def velocity(self):
         return self.displacement - self.previousDisplacement
@@ -64,12 +53,12 @@ class Body:
 
     def gravitationalPotentialEnergy(self):
         GPE = 0
-        for other in bodies:
+        for other in self.simulation.bodies:
             if self is other:
                 break
             separation = (self.displacement - other.displacement).length()
             if separation > 0:
-                GPE += G * self.mass * other.mass / (self.displacement - other.displacement).length()
+                GPE += self.simulation.G * self.mass * other.mass / (self.displacement - other.displacement).length()
         return GPE
 
     def energy(self):
@@ -98,7 +87,17 @@ class Body:
         if self.displacement == other.displacement:
             return pygame.math.Vector2(0, 0)
         separation = self.displacement - other.displacement
-        return G * self.mass * other.mass * separation.normalize() / separation.length_squared()
+        return self.simulation.G * self.mass * other.mass * separation.normalize() / separation.length_squared()
+
+    def drag(self):
+        v = self.velocity()
+        if not v == pygame.math.Vector2(0, 0):
+            p = self.density()
+            A = math.pi * self.radius ** 2
+            K = 0.47
+            return -0.5*p*v.length_squared()*K*A*v.normalize()
+        else:
+            return v
 
     def collide(self, other, dt):
 
@@ -140,7 +139,7 @@ class Body:
         if not (0 < separation.dot(separation) <= lengthLimit ** 2):
             return False
 
-        contactForce = (separation.normalize() * lengthLimit - separation) / dt ** 2
+        contactForce = self.mass*(separation.normalize() * lengthLimit - separation) / dt ** 2
 
         self.applyForce(contactForce)
         other.applyForce(-contactForce)
@@ -228,38 +227,51 @@ class Body:
         normalForce = pygame.math.Vector2(0, 0)
         if self.displacement.x < self.radius:
             normalForce.x += (self.radius - self.displacement.x) / dt ** 2
-        if self.displacement.x + self.radius > screen.width:
-            normalForce.x -= (self.displacement.x + self.radius - screen.width) / dt ** 2
+        if self.displacement.x + self.radius > self.simulation.screen.width:
+            normalForce.x -= (self.displacement.x + self.radius - self.simulation.screen.width) / dt ** 2
         if self.displacement.y < self.radius:
             normalForce.y += (self.radius - self.displacement.y) / dt ** 2
-        if self.displacement.y + self.radius > screen.height:
-            normalForce.y -= (self.displacement.y + self.radius - screen.height) / dt ** 2
+        if self.displacement.y + self.radius > self.simulation.screen.height:
+            normalForce.y -= (self.displacement.y + self.radius - self.simulation.screen.height) / dt ** 2
 
         self.accelerate(normalForce)
 
     def draw(self):
-        pygame.gfxdraw.filled_circle(screen.surface, int(self.displacement.x), int(self.displacement.y), int(self.radius), self.colour)
-        pygame.gfxdraw.aacircle(screen.surface, int(self.displacement.x), int(self.displacement.y), int(self.radius),self.colour)
+        pygame.gfxdraw.filled_circle(self.simulation.screen.surface, int(self.displacement.x), int(self.displacement.y), int(self.radius), self.colour)
+        pygame.gfxdraw.aacircle(self.simulation.screen.surface, int(self.displacement.x), int(self.displacement.y), int(self.radius),self.colour)
+
+    def record(self):
+        name = "Body"+str(self.simulation.bodies.index(self)+1)
+        fields = [name,
+                  self.displacement.length(),
+                  self.velocity().length(),
+                  self.acceleration.length(),
+                  self.simulation.time]
+        line = ",".join([str(field) for field in fields])
+        self.simulation.recordCSV.write(line+'\n')
 
 class Planet(Body):
-    def __init__(self, m, r, h=10):
-        Body.__init__(self, screen.width / 2, screen.height + r - h, m, r)
+    def __init__(self, simulation, m, r, colour=(0, 255, 0), h=10):
+        Body.__init__(self, simulation, simulation.screen.width / 2, simulation.screen.height + r - h, m, r)
         self.colour = (0, 255, 0)
         self.h = h
 
     def draw(self):
-        pygame.draw.rect(screen.surface, self.colour, (0, screen.height - self.h, screen.width, self.h))
+        pygame.draw.rect(
+            self.simulation.screen.surface,
+            self.colour,
+            (0, self.simulation.screen.height - self.h, self.simulation.screen.width, self.h))
 
-points = []
+
 class Point(Body):
     radius = 6
 
-    def __init__(self, x, y, m=0.5):
-        Body.__init__(self, x, y, m, 5)
+    def __init__(self, simulation, x, y, m=0.5):
+        Body.__init__(self, simulation, x, y, m, 5)
         self.displacement = pygame.math.Vector2(x, y)
         self.previousDisplacement = pygame.math.Vector2(x, y)
         self.acceleration = pygame.math.Vector2(0, 0)
-        points.append(self)
+        simulation.points.append(self)
 
     def correct(self, distance):
         self.displacement += distance
@@ -279,17 +291,17 @@ class fixedPoint(Point):
         pass
 
 
-constraints = []
 class Constraint:
     forceConstant = 0.4
     parent = None
     colour = (165, 165, 165)
 
-    def __init__(self, pointA, pointB):
+    def __init__(self, simulation, pointA, pointB):
+        self.simulation = simulation
         self.pointA = pointA
         self.pointB = pointB
         self.target = pointA.displacement.distance_to(self.pointB.displacement)
-        constraints.append(self)
+        self.simulation.constraints.append(self)
 
     def elasticPotentialEnergy(self):
         extension = (self.pointA.displacement-self.pointB.displacement).length() - self.target
@@ -307,19 +319,24 @@ class Constraint:
         self.pointB.correct(-correction)
 
     def draw(self):
-        pygame.draw.aaline(screen.surface, self.colour, self.pointA.displacement, self.pointB.displacement, 1)
+        pygame.draw.aaline(self.simulation.screen.surface,
+                           self.colour,
+                           self.pointA.displacement,
+                           self.pointB.displacement, 1)
+
 
 class Rod(Constraint):
     forceConstant = 0.4
     parent = None
     colour = (165, 165, 165)
 
-    def __init__(self, pointA, pointB):
-        Constraint.__init__(self, pointA, pointB)
+    def __init__(self, simulation, pointA, pointB):
+        Constraint.__init__(self, simulation, pointA, pointB)
         self.pivot = pointA.displacement + 0.5*(pointB.displacement - pointA.displacement)
-        constraints.append(self)
+        simulation.constraints.append(self)
 
     def resolve(self):
+
         Constraint.resolve(self)
         A = self.pointA.displacement
         B = self.pointB.displacement
@@ -332,15 +349,16 @@ class Rod(Constraint):
         X = P - D
         X += L*(t-0.5)
 
-
-        pygame.gfxdraw.filled_circle(screen.surface, int(P.x), int(P.y), 2, fixedPoint.colour)
-
         self.pointA.correct(X)
         self.pointB.correct(X)
 
     def draw(self):
         Constraint.draw(self)
-        pygame.gfxdraw.filled_circle(screen.surface, int(self.pivot.x), int(self.pivot.y), 1, (0, 0, 0))
+        pygame.gfxdraw.filled_circle(self.simulation.screen.surface,
+                                     int(self.pivot.x),
+                                     int(self.pivot.y),
+                                     1,
+                                     fixedPoint.colour)
 
 
 class rigidBody:
@@ -350,117 +368,115 @@ class rigidBody:
             part.parent = self
 
 
-def createBox(x, y, width, height):
-    x -= width / 2
-    y -= height / 2
-    tl = Point(x, y)
-    tr = Point(x + width, y)
-    bl = Point(x, y + height)
-    br = Point(x + width, y + height)
-    c1 = Constraint(tl, tr)
-    c2 = Constraint(tr, br)
-    c3 = Constraint(br, bl)
-    c4 = Constraint(bl, tl)
-    c5 = Constraint(tl, br)
-    # c6 = Constraint(tr, bl)
-    box = [tl, tr, bl, br, c1, c2, c3, c4, c5]
-    return rigidBody(box)
+#earth = Planet(5.972 * 10 ** 24, 6.371 * 10 ** 6, 40)
 
+class Simulation(threading.Thread):
+    def __init__(self, G=6.674 * 10 ** (-11), airResistance=False, keepBodiesInScreen=True, allowUserInteraction=True,
+                 steps=2**5, visual=True):
 
-def createCircle(x, y, r, s):
-    circle = []
-    centre = Point(x, y)
-    pp = None
-    angle = 0
-    while angle < 2 * math.pi:
-        xi = x + r * math.sin(angle)
-        yi = y + r * math.cos(angle)
-        p = Point(xi, yi)
-        c = Constraint(centre, p)
-        circle.append(c)
-        if pp is not None:
-            c2 = Constraint(p, pp)
-            circle.append(c2)
-        pp = p
-        angle += 2 * math.pi / s
-    c = Constraint(pp, circle[0].pointB)
-    circle.append(c)
+        threading.Thread.__init__(self)
 
-    return rigidBody(circle)
+        self.G = G
+        self.airResistance = airResistance
+        self.visual = visual
+        self.steps = steps
+        self.dt = 1 / self.steps
+        self.time = 0
 
-
-def createTruss(x, y, width, height):
-    topAnchor = fixedPoint(x, y)
-    bottomAnchor = fixedPoint(x, y + width)
-    beam = Constraint(topAnchor, bottomAnchor)
-    truss = [topAnchor, bottomAnchor, beam]
-    for i in range(1, height + 1):
-        newTop = Point(x + i * width, y)
-        newBottom = Point(x + i * width, y + width)
-        beam1 = Constraint(topAnchor, newTop)
-        beam2 = Constraint(bottomAnchor, newBottom)
-        beam3 = Constraint(newTop, bottomAnchor)
-        beam4 = Constraint(newTop, newBottom)
-        beam5 = Constraint(topAnchor, newBottom)
-        topAnchor = newTop
-        bottomAnchor = newBottom
-        truss.extend([newTop, newBottom, beam1, beam2, beam3, beam4, beam5])
-    return rigidBody(truss)
-
-
-def createRope(startPoint, endPoint, res):
-    rope = []
-    length = endPoint.displacement- startPoint.displacement
-    for i in range(res):
-        if i != res - 1:
-            nextPoint = Point(startPoint.displacement.x + (length.x / res),
-                              startPoint.displacement.y + (length.y / res))
+        if self.visual:
+            self.keepBodiesInScreen = keepBodiesInScreen
+            self.allowUserInteraction = allowUserInteraction
         else:
-            nextPoint = endPoint
-        c = Constraint(startPoint, nextPoint)
-        startPoint = nextPoint
-        rope.append(c)
-    return rigidBody(rope)
+            self.keepBodiesInScreen = False
+            self.allowUserInteraction = False
 
+    def createBox(self, x, y, width, height):
+        x -= width / 2
+        y -= height / 2
+        tl = Point(self, x, y)
+        tr = Point(self, x + width, y)
+        bl = Point(self, x, y + height)
+        br = Point(self, x + width, y + height)
+        c1 = Constraint(self, tl, tr)
+        c2 = Constraint(self, tr, br)
+        c3 = Constraint(self, br, bl)
+        c4 = Constraint(self, bl, tl)
+        c5 = Constraint(self, tl, br)
+        # c6 = Constraint(self, tr, bl)
+        box = [tl, tr, bl, br, c1, c2, c3, c4, c5]
+        return rigidBody(box)
 
-def createNewtonsCradle(x, y, length, radius, angle, amount):
-    angle = -math.radians(angle)
-    anchor = fixedPoint(x, y)
-    ball = Point(x + (length * math.sin(angle)), y + (length * math.cos(angle)))
-    ball.radius = radius
-    bar = Constraint(anchor, ball)
-    cradle = rigidBody([anchor, ball, bar])
-    x += radius * 2
-    for i in range(amount):
-        anchor = fixedPoint(x + (i * radius * 2), y)
-        ball = Point(x + (i * radius * 2), y + length)
+    def createCircle(self, x, y, r, s):
+        circle = []
+        centre = Point(x, y)
+        pp = None
+        angle = 0
+        while angle < 2 * math.pi:
+            xi = x + r * math.sin(angle)
+            yi = y + r * math.cos(angle)
+            p = Point(self, xi, yi)
+            c = Constraint(self, centre, p)
+            circle.append(c)
+            if pp is not None:
+                c2 = Constraint(self, p, pp)
+                circle.append(c2)
+            pp = p
+            angle += 2 * math.pi / s
+        c = Constraint(self, pp, circle[0].pointB)
+        circle.append(c)
+        return rigidBody(circle)
+
+    def createTruss(self, x, y, width, height):
+        topAnchor = fixedPoint(self, x, y)
+        bottomAnchor = fixedPoint(self, x, y + width)
+        beam = Constraint(self, topAnchor, bottomAnchor)
+        truss = [topAnchor, bottomAnchor, beam]
+        for i in range(1, height + 1):
+            newTop = Point(self, x + i * width, y)
+            newBottom = Point(self, x + i * width, y + width)
+            beam1 = Constraint(self, topAnchor, newTop)
+            beam2 = Constraint(self, bottomAnchor, newBottom)
+            beam3 = Constraint(self, newTop, bottomAnchor)
+            beam4 = Constraint(self, newTop, newBottom)
+            beam5 = Constraint(self, topAnchor, newBottom)
+            topAnchor = newTop
+            bottomAnchor = newBottom
+            truss.extend([newTop, newBottom, beam1, beam2, beam3, beam4, beam5])
+        return rigidBody(truss)
+
+    def createRope(self, startPoint, endPoint, res):
+        rope = []
+        length = endPoint.displacement - startPoint.displacement
+        for i in range(res):
+            if i != res - 1:
+                nextPoint = Point(startPoint.displacement.x + (length.x / res),
+                                  startPoint.displacement.y + (length.y / res))
+            else:
+                nextPoint = endPoint
+            c = Constraint(startPoint, nextPoint)
+            startPoint = nextPoint
+            rope.append(c)
+        return rigidBody(rope)
+
+    def createNewtonsCradle(self, x, y, length, radius, angle, amount):
+        angle = -math.radians(angle)
+        anchor = fixedPoint(self, x, y)
+        ball = Point(self, x + (length * math.sin(angle)), y + (length * math.cos(angle)))
         ball.radius = radius
-        bar = Constraint(anchor, ball)
+        bar = Constraint(self, anchor, ball)
         cradle = rigidBody([anchor, ball, bar])
+        x += radius * 2
+        for i in range(amount):
+            anchor = fixedPoint(self, x + (i * radius * 2), y)
+            ball = Point(self, x + (i * radius * 2), y + length)
+            ball.radius = radius
+            bar = Constraint(self, anchor, ball)
+            cradle = rigidBody([anchor, ball, bar])
 
-def __main__():
-    global bodies, points, constraints, G, screen, fps, pixelsPerMetre
-
-    earth = Planet(5.972 * 10 ** 24, 6.371 * 10 ** 6, 40)
-    #createTruss(30, 30, 40, 6)
-    #rigidBody([Constraint(fixedPoint(10, screen.height - 30), fixedPoint(screen.width - 10, screen.height - 30))])
-    #createNewtonsCradle(260, 200, 200, 20, 30, 4)
-    #createRope(fixedPoint(300, 10), Point(300, 310), 100)
-    #createCircle(300, 40, 30, 10)
-
-    #p = Body(100 + 20, screen.height - 100 - 20, 1, 20)
-    #q = Body(screen.width-100-20, screen.height - 100-20, 1, 20)
-    #rod = Rod(Point(100, screen.height - 100), Point(screen.width-100, screen.height - 100))
-
-    Body(300, 30, 15, 20)
-    p1 = None
-    p2 = None
-    running = True
-    paused = False
-    while running:
+    def interact(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = not running
+                self.running = not self.running
 
             if event.type == pygame.MOUSEBUTTONUP:
                 mouse = pygame.mouse.get_pos()
@@ -468,77 +484,132 @@ def __main__():
                     p1 = p2
                     if p1 != None:
                         connect = False
-                        for point in points:
+                        for point in self.points:
                             if (mouse - point.displacement).length() <= point.radius * 2:
                                 p2 = point
                                 connect = True
                         if not connect:
-                            p2 = Point(mouse[0], mouse[1])
-                        c = Constraint(p1, p2)
+                            p2 = Point(self, mouse[0], mouse[1])
+                        c = Constraint(self, p1, p2)
                     else:
-                        p2 = fixedPoint(mouse[0], mouse[1])
+                        p2 = fixedPoint(self, mouse[0], mouse[1])
                 elif event.button == 3:
                     p1 = p2
-                    p2 = fixedPoint(mouse[0], mouse[1])
+                    p2 = fixedPoint(self, mouse[0], mouse[1])
                     if p1 != None:
-                        c = Constraint(p1, p2)
+                        c = Constraint(self, p1, p2)
                 elif event.button == 2:
-                    size = 2 * pixelsPerMetre * random.random() + 5
-                    newBox = createBox(mouse[0], mouse[1], size, size)
+                    size = 2 *50 * random.random() + 5
+                    newBox = self.createBox(mouse[0], mouse[1], size, size)
                 else:
-                    size = 2 * pixelsPerMetre * random.random() + 5
-                    newBody = Body(mouse[0], mouse[1], 1, size)
+                    size = 2 * 50 * random.random() + 5
+                    newBody = Body(self, mouse[0], mouse[1], 1, size)
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_x:
-                    bodies = [earth]
-                    del points[:]
-                    del constraints[:]
+                    self.bodies = [self.planet]
+                    self.points = []
+                    self.constraints = []
+                    print('hdb')
                     p1 = None
                     p2 = None
                 elif event.key == pygame.K_SPACE:
-                    paused = not paused
+                    self.paused = not self.paused
                 elif event.key == pygame.K_ESCAPE:
-                    running = not running
+                    self.running = not self.running
 
-        if not paused:
-            steps = 2 ** 5  # Proportional to precision of simulation
-            dt = 1 / steps
-            screen.surface.fill((224, 247, 255))
-            for step in range(steps):
-                totalEnergy = 0
-                screen.surface.fill((224, 247, 255))
-                drawText('2D physics simulation utilising multi-step Verlet integration', 30, 2, 0)
-                drawText(' V  0.12', 12, 2, 20)
+    def run(self):
 
-                for constraint in constraints:
-                    constraint.resolve()
-                    constraint.draw()
-                    totalEnergy += constraint.elasticPotentialEnergy()
+        pygame.init()
+        self.screen = Canvas(700, 500, "Newton's Laboratory - Simulation")
+        self.fps = float("inf")
+        self.bodies = []
+        self.points = []
+        self.constraints = []
+        self.planet = Planet(self, 5.972 * 10 ** 24, 6.371 * 10 ** 6, 40)
 
-                for body in bodies:
-                    for other in bodies:
-                        if body is other:
-                            break
-                        body.collide(other, dt)
-                        gravity = body.gravitationalForce(other)
-                        body.applyForce(-gravity)
-                        other.applyForce(gravity)
+        #self.createTruss(30, 30, 40, 6)
+        #rigidBody([Constraint(fixedPoint(10, screen.height - 30), fixedPoint(screen.width - 10, screen.height - 30))])
 
-                    for constraint in constraints:
-                        if not constraint.parent == body:
-                            body.constraintCollide(constraint, dt)
+        #self.createNewtonsCradle(260, 200, 200, 20, 30, 4)
+        #createRope(fixedPoint(300, 10), Point(300, 310), 100)
+        #createCircle(300, 40, 30, 10)
 
-                    if not isinstance(body, Planet) and keepBodiesInScreen:
-                        body.borderCollide(dt)
-                    body.simulate(dt)
-                    body.draw()
-                    totalEnergy += body.energy()
+        #p = Body(100 + 20, screen.height - 100 - 20, 1, 20)
+        #q = Body(screen.width-100-20, screen.height - 100-20, 1, 20)
+        #rod = Rod(Point(100, screen.height - 100), Point(screen.width-100, screen.height - 100))
 
-                #print(totalEnergy, " J")
-                #pygame.time.Clock().tick(steps)
-                pygame.display.update()
+        Body(self,300, 30, 15, 20)
+        p1 = None
+        p2 = None
+        self.running = True
+        self.paused = False
 
-__main__()
-pygame.quit()
-quit()
+        if not self.visual:
+            pygame.display.iconify()
+
+        basepath = ''
+        if not __name__ == "__main__":
+            basepath += 'data/'
+
+        self.recordCSV = None
+        i = 1
+        while True:
+            try:
+                self.recordCSV = open(basepath+"simulation"+str(i)+".csv")
+            except FileNotFoundError:
+                break
+            i += 1
+        self.recordCSV = open(basepath+"simulation"+str(i)+".csv", 'w')
+        self.recordCSV.write("Body ID, Displacement (m), Velocity (m/s), Acceleration (m/s\u00b2), Time (s)\n")
+
+        while self.running:
+            if self.allowUserInteraction:
+                self.interact()
+
+            if not self.paused:
+                for step in range(self.steps):
+                    totalEnergy = 0
+                    self.screen.surface.fill((224, 247, 255))
+                    self.screen.drawText('Visual 2D physics simulation utilising multi-step Verlet integration', 15, 2, 0)
+
+                    for constraint in self.constraints:
+                        constraint.resolve()
+                        totalEnergy += constraint.elasticPotentialEnergy()
+                        if self.visual:
+                            constraint.draw()
+
+                    for body in self.bodies:
+                        body.record()
+                        if self.airResistance:
+                            body.applyForce(body.drag())
+
+                        for other in self.bodies:
+                            if body is other:
+                                break
+                            body.collide(other, self.dt)
+                            gravity = body.gravitationalForce(other)
+                            body.applyForce(-gravity)
+                            other.applyForce(gravity)
+
+                        for constraint in self.constraints:
+                            if not constraint.parent == body:
+                                body.constraintCollide(constraint, self.dt)
+
+                        if not isinstance(body, Planet) and self.keepBodiesInScreen:
+                            body.borderCollide(self.dt)
+                        totalEnergy += body.energy()
+
+                        if self.visual:
+                            body.draw()
+                        body.simulate(self.dt)
+                    self.time += self.dt
+
+                    #print(totalEnergy, " J")
+                    #pygame.time.Clock().tick(self.fps)
+                    pygame.display.update()
+        self.recordCSV.close()
+        pygame.quit()
+
+if __name__ == "__main__":
+    Simulation().start()

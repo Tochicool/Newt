@@ -2,9 +2,6 @@ import app.questions as questions
 
 from tkinter import *
 from tkinter import ttk, messagebox
-from PIL import Image, ImageTk
-
-import subprocess
 
 headFont = ("Helvetica", 20, "bold")
 buttonFont = ("Helvetica", 20, "bold")
@@ -27,22 +24,28 @@ class splash(Tk):
     def __init__(self):
         Tk.__init__(self)
 
+        try:
+            from PIL import Image, ImageTk
+
+            w = self.winfo_screenwidth()
+            load = Image.open("assets/images/splash.png")
+            ratio = (w // 2) / load.width
+            load = load.resize((w // 2, int(load.height * ratio)), Image.ANTIALIAS)
+            # self["width"] = w//2
+            # self["height"] = load.height
+            self.photo = ImageTk.PhotoImage(load)
+            image = ttk.Label(self, image=self.photo)
+            image.pack(expand=True, fill=BOTH, side=TOP)
+
+        except ImportError:
+            print('Please install PIL library to view splash')
+
         self.protocol("WM_DELETE_WINDOW", doNotClose)
         self.wm_attributes("-topmost", True)
         self.wm_overrideredirect(True)
 
         self.progressBar = ttk.Progressbar(self, orient=HORIZONTAL, mode="determinate")
         self.progressBar.pack(expand=True, side=BOTTOM, fill=BOTH)
-
-        w = self.winfo_screenwidth()
-        load = Image.open("assets/images/splash.png")
-        ratio = (w // 2) / load.width
-        load = load.resize((w // 2, int(load.height * ratio)), Image.ANTIALIAS)
-        #self["width"] = w//2
-        #self["height"] = load.height
-        self.photo = ImageTk.PhotoImage(load)
-        image = ttk.Label(self, image=self.photo)
-        image.pack(expand=True, fill=BOTH, side=TOP)
 
         centre(self)
 
@@ -131,9 +134,8 @@ class menu(ttk.Frame):
         self.items.choices.bind('<<ListboxSelect>>', self.select)
         self.items.choices.selection_set(0)
 
-    def createProperties(self, generateQuiz, startQuiz):
+    def createProperties(self, generateQuiz, startQuiz, startSim):
         # Quiz
-
         self.properties.quiz = quiz = ttk.Frame(self.properties)
         quiz.pack(fill=BOTH, expand=1)
         quiz.generateQuiz = generateQuiz
@@ -174,7 +176,21 @@ class menu(ttk.Frame):
         quiz.start = ttk.Button(quiz, text="START!", command=startQuiz).grid(column=0, row=5, rowspan=2, padx=10, pady=10, sticky="nesw")
 
         self.properties.sim = sim = ttk.Frame(self.properties)
-        sim.G = IntVar(value=1)
+        sim.visual = BooleanVar(value=True)
+        sim.G = StringVar(value="0.00000000006674")
+        sim.airResistance = BooleanVar(value=False)
+        sim.steps = StringVar(value=32)
+
+        ttk.Checkbutton(sim, text="Visual simulation", var=sim.visual).pack(anchor="w", pady=5)
+        ttk.Checkbutton(sim, text="Air resistance", var=sim.airResistance).pack(anchor="w", pady=5)
+
+        ttk.Label(sim, text="Value of G:").pack(anchor="sw", pady=5)
+        ttk.Entry(sim, textvariable=sim.G).pack(anchor="nw", pady=5)
+        ttk.Label(sim, text="Steps").pack(anchor="sw", pady=5)
+        ttk.Entry(sim, textvariable=sim.steps).pack(anchor="nw", pady=5)
+        ttk.Button(sim, text="START!", command=startSim).pack(anchor="w", pady=5)
+
+        return
 
 
 
@@ -186,13 +202,14 @@ class menu(ttk.Frame):
 
     def select(self, event=None):
         choice = self.items.choices.curselection()[0]
+        self.properties.quiz.pack_forget()
+        self.properties.sim.pack_forget()
         if choice == 0:
-            self.properties.quiz.tkraise()
+            self.properties.quiz.pack()
             self.setDescription("Generate a random set of questions based on your configuration")
         elif choice == 1:
-            self.properties.sim.tkraise()
+            self.properties.sim.pack()
             self.setDescription("Start a 2D-physics simulation environment for experiments and demonstrations")
-            subprocess.Popen("python app/sim.py 3")
         elif choice == 2:
             self.setDescription("View notes and explanations on select topics")
         elif choice == 3:
