@@ -101,4 +101,3 @@ generateQuiz()
 #window.bodyText.set("Hello %s!" %(user["First Name"]))
 
 window.mainloop()
-
