@@ -1,0 +1,197 @@
+﻿Example multiple choice question with n red herrings where n is any integer greater than zero
+
+Prompt of question
+
+Correct answer
+Red herring 1
+Red herring 2
+...
+Red herring n-1
+Red herring n
+
+
+#Motion
+A Feather and a ball of greater mass is held at a height h above the ground in a vacuum.
+What will happen when both objects are dropped.
+
+They will land at the same time
+The ball will land first
+The feather will land first
+There is not enough information to come to a conclusion
+
+A cannon ball is to be launched at an angle θ from the horizontal.
+What value of θ will result in the greatest displacement from the horizontal?
+
+45°
+0°
+30°
+60°
+
+The missile of mass m is dropped from a vertical drone directly above a terrorist hideout.
+The missile falls until it reaches a terminal velocity of v.
+What is the value of the drag force D on the missile just before it reaches the target?
+
+mg N
+2mg N
+mv N
+0 N
+
+You throw a card vertically upwards at t=0. The card reaches a maximum height at t=T.
+At what value of t will the card reach your hand?
+Assume air resistance is negligible.
+
+2T s
+3T s
+T+2 s
+T² s
+
+A mocking bird flying at a height h directly above the sea is shot dead by a hunter on a boat.
+How long does the hunter have before the bird hits the sea?
+Assume air resistance is negligible.
+
+√(2gh) s
+½gh s
+gh s
+√(3g) s
+
+#Forces & Vectors
+Three forces, each of magnitude F, act on a point at right angles to each other.
+What is the magnitude of the resultant force on that point?
+
+√3F N
+3F N
+0 N
+Three forces cannot all be at right angles to each other
+
+A rope is used to pull a box with a tension T at an angle of θ to the horizontal.
+What is the magnitude of the vertical component of tension?
+
+Tsinθ
+Tcosθ
+Ttanθ
+T
+
+A rope is used to pull a box with a tension T at an angle of θ to the horizontal.
+What is the magnitude of the horizontal component of tension?
+
+Tcosθ
+Tsinθ
+Ttanθ
+T
+
+A feather of mass m floats through the air horizontally at a constant velocity.
+A fan underneath provides a constant force at an angle θ to the horizontal.
+What is the magnitude of force the fan provides?
+
+mg/sinθ
+mg/cosθ
+mg
+mgcosθ
+
+Alice sits at a distance d from the centre of a seesaw whilst Bob sits at 2d from the centre on the other side.
+Given that the seesaw is in equilibrium, how much does Alice weight in comparison to alice?
+
+Alice weights twice as much as Bob
+Alice weights half as much as Bob
+Alice and Bob both weight the same
+There is not enough information to come to a conclusion
+
+#Energy
+A picture frame falls from a wall at a height h after a supporting thread is torn.
+What is the velocity of the frame just before it shatters?
+Assume air resistance is negligible.
+
+√(2gh)
+√(gh)
+2gh
+gh
+
+A biker pushes a broken down motorcycle with a horizontal force of F up a slope at an angle of θ to the horizontal.
+The motorcycle is pushed up the slope by a height of h.
+What is the work done on the bike by the biker?
+
+Fh/tanθ
+Fh
+Fhcosθ
+Fh/sinθ
+
+What is the SI unit of a kilowatt hour?
+
+Js
+Kwh
+Kw/h
+J/s
+
+The earth orbits the sun in a near circular orbit with the sun's gravitational force always at right angles to the velocity of the earth.
+What is the work done by the gravitational force of the sun on the motion of the earth in one year?
+Take the gravitational force to be F and the radius of orbit as r.
+
+0 Nm
+2ᴨrF Nm
+Fr Nm
+There is not enough information to come to a conclusion
+
+A bullet of mass m is travelling at an initial velocity of v.
+The bullet splits in half as it hits the car door, with one of the halves passing through the car door with 50% of it's initial speed.
+What is the energy transferred to the car door?
+
+0.4375mv²
+0.5mv²
+0.25mv²
+mv²
+
+#Materials
+What is the SI unit of the spring constant K?
+
+N/m
+Nm
+N/m²
+Nm²
+
+#Newton's laws & Momentum
+You are an astronaut on a space walk and your tether to the ISS has just snapped.
+You are now drifting away from the space station at a velocity v.
+What do you do in order to gain momentum towards the spacecraft?
+
+Throw an object away from the spacecraft
+Throw an object towards the spacecraft
+Throw an object perpendicular to the spacecraft
+Do nothing; gravity will pull you towards the ISS
+
+Which one of these pairs of forces is NOT an interaction pair according to Newton's third law of motion?
+
+The weight of a stationary object on the earth and the normal contact force on the same object
+The weight of a falling object and the earth's attraction towards the object
+The repulsive electrical forces between the north poles of two bar magnets
+The electrostatic repulsive contact forces between two colliding objects
+
+A white snooker ball of mass m and velocity v collides head-on with a red stationary snooker ball.
+What will happen after the two balls collide?
+Assume that the collision is perfectly elastic.
+
+The white snooker ball will stop and the red snooker ball will move at a velocity v
+The white snooker ball will change direction and the red snooker will remain at rest
+The white snooker ball will stop and the red snooker ball will move at a velocity 0.5v
+Both balls will move in opposite directions, both at a velocity v
+
+According to Newton's first law of motion, what will happen to a meteorite moving in space at a constant velocity of 2.0x10 m/s?
+Assume that there are no external forces acting on the meteorite.
+
+The meteorite will continue to move at a constant velocity
+The meteorite will continue to accelerate
+The meteorite will start to decelerate
+There is not enough information to come to a conclusion
+
+According to Newton's second law of motion, the net force is directly proportional to what?
+
+Rate of change in linear momentum
+Change in linear momentum
+The square of linear momentum
+The reciprocal of linear momentum
+
+In a perfectly elastic collision, which of these quantities are always conserved?
+
+Total energy, Momentum, and kinetic energy
+Total energy and Momentum
+Total energy and kinetic energy
+Total energy, Momentum, kinetic energy and mass.

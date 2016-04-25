@@ -1,0 +1,76 @@
+﻿word: exemplar definition with [keywords] marked
+
+Velocity: the [rate of change] of [displacement]
+
+Acceleration: as the object approaches the speed of light, the mass of the object increases
+
+#Motion
+Displacement: [net] distance moved in a particular direction
+
+Instantaneous speed: speed measured between two points a very small time apart
+
+Average speed: [distance] covered per time taken
+
+Velocity: rate of change of [displacement]
+
+Acceleration: rate of change of [velocity]
+
+Reaction Time: time taken to react to [stimuli]
+
+Thinking distance: The distance travelled from when the driver sees a problem and the [brakes] are applied
+
+Braking distance: The distance travelled  whilst the brakes are applied and the car stops
+
+stopping distance: thinking distance + stopping distance
+
+#Forces & Vectors
+a Scalar quantity: a quantity that has a [magnitude] without [direction]
+
+a Vector quantity: a quantity that has [both] magnitude / size and [direction]
+
+Drag: the frictional force experienced by an object travelling through a fluid
+
+Terminal velocity: when the weight of an object equals the drag force
+
+the Moment of a Force: force x [perpendicular] distance from pivot
+
+the Torque of a Couple: [one] of forces × perpendicular distance
+
+Density: mass per unit volume
+
+Pressure: force per unit area
+
+#Energy
+Work Done: force x distance [moved] in the direction of the force
+
+the Principle of Conservation of Energy: energy cannot be created or destroyed; it can only be transferred into other forms
+
+#Materials
+Elastic Deformation: extension (or compression) where material will return to its original length
+
+Plastic Deformation: Material does not return to original length
+
+Hooke's Law: Extension is proportional to force (applied)
+
+#Newton's laws & Momentum
+Newton’s First Law of Motion: A body will remain at rest or continue to move with
+constant velocity unless acted upon by a force
+
+Newton’s Second Law of Motion: Force is proportional to the rate of change of momentum
+
+Newton’s Third Law of Motion: When one body exerts a force on another, the other body
+exerts an equal in magnitude and opposite in direction force on the first body
+
+Linear Momentum: the product of mass and velocity ; momentum is a vector
+
+Net Force on a Body: proportional to the rate of change of momentum
+
+Impulse of a Force: Product of force acting on a body and the time its acting; equal to the rate of change of momentum
+
+the Principle of Conservation of Momentum: Total momentum is conserved for a closed system
+
+a Perfectly Elastic Collision: A collision with no loss of kinetic energy
+
+an Inelastic Collision: Some loss of kinetic energy during the collision
+
+#End
