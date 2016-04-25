@@ -30,10 +30,8 @@ class Canvas:
         self.surface = pygame.display.set_mode( (width, height) )
         pygame.display.set_caption( windowcaption )
 
-
 screen = Canvas( w, h, 'Solver' )
 simple_font = pygame.font.SysFont( "monospace", 15 )
-
 
 class Body:
     c1, c2, c3 = Vector.zero, Vector.zero, Vector.zero

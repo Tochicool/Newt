@@ -1,8 +1,9 @@
 # PhCharm directory
 .idea/
 
-# Data files
-data/
-
 # Google Drive
 .ini
+
+.quiz
+.sim
+.svg

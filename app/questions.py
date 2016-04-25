@@ -1,5 +1,6 @@
-import math
+import pickle
 import random
+
 import app.userInput as input
 
 questions = []
@@ -7,12 +8,12 @@ questions = []
 class Question():
 
     hint = "No hint available"
-    marks = int()
-    maxMarks = int()
+    marks = 0
+    maxMarks = 0
+    isMarked = False
     topics = []
     diagram = None
     response = None
-    gui = None
 
     def __init__(self, prompt, answer, topic=None):
         self.prompt = prompt
@@ -39,6 +40,8 @@ class MultipleChoice(Question):
         random.shuffle(self.options)
 
     def mark(self, response):
+        if self.isMarked:
+            return True
         if self.answer == response:
             self.response = response
             return True
@@ -82,6 +85,10 @@ class Qualitative(Question):
         self.marks = max(1, len(self.keywords))
     
     def mark(self, response, tolerance=0.5):
+
+        if self.isMarked:
+            return self.marks
+
         self.response = input.normalise(response)
 
         if len(self.keywords) > 0:
@@ -123,7 +130,10 @@ class Quantitative(Question):
 
 
 class Quiz():
+
     index = 0
+    completed = False
+
     def __init__(self, questionSet, timed=True, showHints=True):
         self.questionSet = questionSet
         if timed:
@@ -133,7 +143,7 @@ class Quiz():
         self.showHints = showHints
 
     def score(self):
-        return sum([question.marks for question in self.questionSet if question.response is not None])
+        return sum([question.marks for question in self.questionSet if question.isMarked])
 
     def maxScore(self):
         return sum([question.maxMarks for question in self.questionSet])
@@ -141,9 +151,16 @@ class Quiz():
     def numberAnswered(self):
         number = 0
         for question in self.questionSet:
-            if question.response is not None:
+            if question.isMarked:
                 number += 1
         return number
+
+    def save(self, quizFile):
+        pickle.dump(self, quizFile, pickle.HIGHEST_PROTOCOL)
+
+    def load(self, quizFile):
+        return pickle.load(quizFile)
+
 
 
 definitionsTXT = open('data/definitions.txt', 'r', encoding='utf-8')
@@ -222,4 +239,4 @@ for line in qualitativeTXT:
 qualitativeTXT.close()
 
 #for question in questions:
-    #print(questions.index(question), question)
+# print(questions.index(question), question.answer)

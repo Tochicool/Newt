@@ -1,10 +1,11 @@
-import app.gui as gui
-import app.userInput as input
-import app.questions as questions
-import app.sim as sim
 import os
 import pickle
 import random
+
+import app.gui as gui
+import app.questions as questions
+import app.sim as sim
+import app.userInput as input
 
 user = {"First Name": "",
         "Last Name": ""}
@@ -25,6 +26,7 @@ def submitNewUserForm(event=None):
     elif not input.isWord(lName):
         window.newUserForm.errorLabel['text'] = "Error: Last name is not valid"
     else:
+
         window.newUserForm.errorLabel['text'] = ":)"
         user["First Name"] = fName.title()
         user["Last Name"] = lName.title()

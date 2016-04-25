@@ -1,7 +1,7 @@
-import app.questions as questions
-
 from tkinter import *
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
+
+import app.questions as questions
 
 headFont = ("Helvetica", 20, "bold")
 buttonFont = ("Helvetica", 20, "bold")
@@ -168,7 +168,10 @@ class menu(ttk.Frame):
         ttk.Scale(quiz, from_=1, to=3, orient=HORIZONTAL, variable=quiz.difficulty, command=generateQuiz).grid(column=1, row=3, sticky="w", pady=10)
 
         ttk.Label(quiz, text="Number of questions:").grid(column=0, row=4, sticky="e")
-        Spinbox(quiz, textvariable=quiz.noOfQuestions, from_=1, to=50, font=bodyFont, width=2, command=generateQuiz).grid(column=1, row=4, sticky="w", pady=10)
+        spinBox = Spinbox(quiz, textvariable=quiz.noOfQuestions, from_=1, to=50, font=bodyFont, width=2,
+                          command=generateQuiz)
+        spinBox.grid(column=1, row=4, sticky="w", pady=10)
+        spinBox.bind("<Key>", generateQuiz)
 
         ttk.Checkbutton(quiz, text="Timed", var=quiz.isTimed).grid(column=1, row=5, sticky="sw")
         ttk.Checkbutton(quiz, text="Give Hints", var=quiz.giveHints).grid(column=1, row=6, sticky="nw")
@@ -231,13 +234,13 @@ class quizFrame(ttk.Frame):
         toolbar = self.toolbar = ttk.LabelFrame(self, text="Toolbar", padding=10)
         toolbar.pack(fill=X)
 
-        ttk.Button(toolbar, text="Back", command=lambda: self.ask(quiz.questionSet[quiz.index-1])).grid(
+        ttk.Button(toolbar, text="\u2190 Back", command=lambda: self.ask(quiz.questionSet[quiz.index - 1])).grid(
             row=0, column=0, rowspan=1, columnspan=1, sticky="nw", padx=10)
 
         self.timeLeft = Variable(value=str(self.quiz.time)+" seconds remaining")
 
         ttk.Label(toolbar, textvariable=self.timeLeft).grid(
-            row=0, column=1, rowspan=1, columnspan=3, padx=10)
+            row=1, column=0, rowspan=1, columnspan=3, padx=10)
 
         ttk.Button(toolbar, text="Hint", command=self.showHint, state=(DISABLED, ACTIVE)[self.quiz.showHints]).grid(
             row=0, column=4, rowspan=1, columnspan=1, padx=10)
@@ -245,25 +248,43 @@ class quizFrame(ttk.Frame):
         self.markButton = ttk.Button(toolbar, text="Mark", command=self.mark)
         self.markButton.grid(row=0, column=5, rowspan=1, columnspan=1, padx=10)
 
-        ttk.Button(toolbar, text="Next", command=lambda: self.ask(quiz.questionSet[quiz.index+1])).grid(
-            row=0, column=6, rowspan=1, columnspan=2, sticky="ne", padx=10)
+        ttk.Button(toolbar, text="Next \u2192", command=lambda: self.ask(quiz.questionSet[quiz.index + 1])).grid(
+            row=0, column=6, rowspan=1, columnspan=2, padx=10)
+
+        ttk.Button(toolbar, text="Save", command=self.save).grid(
+            row=0, column=8, rowspan=1, columnspan=1, padx=10)
+
+        ttk.Button(toolbar, text="Load", command=self.load).grid(
+            row=0, column=9, rowspan=1, columnspan=1, padx=10)
 
         self.questionText.pack(fill=X, side=TOP)
 
-        #self.responseArea = ttk.LabelFrame(self, text="Your Response")
-        #self.responseArea.pack(fill=BOTH, side=TOP)
+        self.responseArea = ttk.LabelFrame(self, text="Your Response")
+        self.responseArea.pack(fill=BOTH, side=TOP)
 
         self.ask(self.quiz.questionSet[self.quiz.index])
 
         if not self.quiz.time == '\u221E':
             self.after(1000, self.countdown)
 
-    def ask(self, question):
+    def update(self):
+        question = self.quiz.questionSet[self.quiz.index]
         try:
-            self.responseArea.pack_forget()
-            self.quiz.questionSet[self.quiz.index].gui = self.responseArea
-        except Exception:
-            pass
+            if isinstance(question, questions.Qualitative):
+                question.response = self.responseArea.response.get(1.0, END)
+                print(question.response)
+            elif isinstance(question, questions.MultipleChoice):
+                selection = self.responseArea.options.curselection()[0]
+                question.response = question.options[selection]
+        except AttributeError:
+            pass  # When widgets are first created
+
+    def ask(self, question):
+
+        self.update()
+
+        for child in self.responseArea.winfo_children():
+            child.destroy()
 
         self.quiz.index = self.quiz.questionSet.index(question)
         self.questionText["state"] = NORMAL
@@ -271,37 +292,43 @@ class quizFrame(ttk.Frame):
         self.questionText.insert(END, str(self.quiz.index+1)+") "+str(question)+"\n("+str(question.maxMarks)+" marks)")
         self.questionText["state"] = DISABLED
 
-        if question.response is not None:
+        if question.isMarked:
             self.markButton["state"] == DISABLED
         else:
             self.markButton["state"] == ACTIVE
 
-        if question.gui is None:
-            self.responseArea = ttk.LabelFrame(self, text="Your Response")
-            self.responseArea.pack(fill=BOTH, side=TOP, padx=10, pady=10)
-            if isinstance(question, questions.Qualitative):
-                self.responseArea.response = Text(self.responseArea, font=bodyFont, padx=10, pady=10, height=question.marks*3, wrap=WORD)
-                self.responseArea.response.pack(fill=BOTH, expand=1, padx=10, pady=10)
-            elif isinstance(question, questions.MultipleChoice):
-                self.responseArea.optionsText = Variable(value=question.options)
-                self.responseArea.options = Listbox(
-                    self.responseArea, listvariable=self.responseArea.optionsText, font=headFont, height=len(question.options))
+        if isinstance(question, questions.Qualitative):
+            self.responseArea.response = Text(self.responseArea, font=bodyFont, padx=10, pady=10,
+                                              height=question.marks * 3, wrap=WORD)
+            if question.response is not None:
+                self.responseArea.response.insert(END, question.response)
+                print(self.responseArea.response.get(1.0, END))
+            self.responseArea.response.pack(fill=BOTH, expand=1, padx=10, pady=10)
+        elif isinstance(question, questions.MultipleChoice):
+            self.responseArea.optionsText = Variable(value=tuple(question.options))
+            self.responseArea.options = Listbox(
+                self.responseArea, listvariable=self.responseArea.optionsText, font=headFont,
+                height=len(question.options))
+            if question.response is not None:
+                self.responseArea.options.selection_set(question.options.index(question.response))
+            else:
                 self.responseArea.options.selection_set(0)
-                self.responseArea.options.pack(fill=BOTH, expand=1, padx=10, pady=10)
-            elif isinstance(question, questions.Qualitative):
-                self.responseArea.response = ttk.Entry(self.responseArea, width=7)
-                self.responseArea.response.pack(expand=1, padx=10, pady=10)
-        else:
-            self.responseArea = question.gui
-            self.responseArea.pack(fill=BOTH, side=TOP, padx=10, pady=10)
+            self.responseArea.options.pack(fill=BOTH, expand=1, padx=10, pady=10)
+        elif isinstance(question, questions.Qualitative):
+            self.responseArea.response = ttk.Entry(self.responseArea, width=7)
+            self.responseArea.response.pack(expand=1, padx=10, pady=10)
+
+        if question.isMarked:
+            self.mark()
 
     def countdown(self):
-        if self.quiz.time > 0:
-            self.quiz.time -= 1
-            self.timeLeft.set(str(self.quiz.time) + " seconds remaining")
-            self.after(1000, self.countdown)
-        else:
-            self.finished()
+        if not self.quiz.completed:
+            if self.quiz.time > 0:
+                self.quiz.time -= 1
+                self.timeLeft.set(str(self.quiz.time) + " seconds remaining")
+                self.after(1000, self.countdown)
+            else:
+                self.finished()
 
     def showHint(self):
         if self.quiz.showHints:
@@ -311,30 +338,29 @@ class quizFrame(ttk.Frame):
             )
 
     def mark(self):
-        question = self.quiz.questionSet[self.quiz.index]
 
-        if question.response is not None:
-            return
+        self.update()
+
+        question = self.quiz.questionSet[self.quiz.index]
 
         self.answerArea = ttk.LabelFrame(self.responseArea, text="Result:")
         self.answerArea.pack(fill=BOTH, expand=1, padx=10, pady=10)
 
         if isinstance(question, questions.Qualitative):
             self.responseArea.response["state"] = DISABLED
-
-
             marks = question.mark(self.responseArea.response.get(1.0, END))
+
             answer = Text(self.answerArea, font = bodyFont, padx = 10, pady = 10, height = 6, wrap = WORD)
             answer.pack(fill=BOTH, expand=1, padx=10, pady=10)
             answer.insert(END, question.answer)
             ttk.Label(self.answerArea, text="You scored "+str(question.marks)+" out of "+str(question.maxMarks)).pack(
                 fill=BOTH, side=BOTTOM, expand=1, padx=10, pady=10)
             answer["state"] = DISABLED
+            question.isMarked = True
 
         elif isinstance(question, questions.MultipleChoice):
             selection = self.responseArea.options.curselection()[0]
             response = question.options[selection]
-
             if '\u0336' in self.responseArea.optionsText.get()[selection]:
                 return
             elif question.mark(response) != -1:
@@ -346,31 +372,45 @@ class quizFrame(ttk.Frame):
                 self.responseArea.optionsText.set(tuple(optionsText))
                 ttk.Label(self.answerArea, text="You scored " + str(question.marks) + " out of " + str(question.maxMarks)).pack(
                     fill=BOTH, side=BOTTOM, expand=1, padx=10, pady=10)
+                question.isMarked = True
             else:
                 optionsText =  list(self.responseArea.optionsText.get())
                 text = optionsText[selection]
                 text = '\u0336'.join(text) + '\u0336' #strikethrough
                 optionsText[selection] = text
+                question.options[selection] = text
                 self.responseArea.optionsText.set(tuple(optionsText))
 
         elif isinstance(question, questions.Qualitative):
             self.responseArea.response = ttk.Entry(self.responseArea, width=7)
             self.responseArea.response.pack(expand=1, padx=10, pady=10)
-        pass
 
         if self.quiz.numberAnswered() == len(self.quiz.questionSet):
             self.finished()
 
+    def save(self):
+        with filedialog.asksaveasfile(mode="wb", initialfile='untitled', defaultextension='quiz',
+                                      filetypes=[("Newton's Laboratory Quiz File", ".quiz")]) as quizFile:
+            self.quiz.save(quizFile)
+
+    def load(self):
+        with filedialog.askopenfile(mode="rb", filetypes=[("Newton's Laboratory Quiz File", ".quiz")]) as quizFile:
+            self.quiz = self.quiz.load(quizFile)
+        self.quiz.index = 0
+        self.ask(self.quiz.questionSet[0])
+
     def finished(self):
+        if self.quiz.completed:
+            return
         messagebox.showinfo(
             "Quiz Results",
             "Your total score for this quiz is:\n"+str(self.quiz.score())+" out of "+str(self.quiz.maxScore())
         )
+        self.quiz.completed = True
+        self.save()
         self.master.menu.grid()
         self.master.menu.properties.quiz.generateQuiz()
         self.destroy()
-
-
 
 class window(Tk):
     def __init__(self):
